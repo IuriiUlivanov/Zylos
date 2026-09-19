@@ -1,0 +1,21 @@
+---
+description: ETL и схема PostGIS (этапы 1–2)
+globs: infra/postgis/**,scripts/**,data/README.md,docker-compose.yml
+alwaysApply: false
+---
+
+# ETL / PostGIS
+
+Мастер справочника — PostGIS, не тайлы. Повторный ETL не пересобирает PMTiles без нужды и не меняет relation **1649672**.
+
+Таблицы: `city_boundary`, `category`, `building`, `address`, `organization`. GIST на `*.geom`. Unique: building `(osm_type, osm_id)`; address/organization `(source, source_id)`.
+
+- `building.geom` — полигон. `address.geom` / `organization.geom` — точки. CRS 4326.
+- `address.source`: `osm` | `rgz`. `organization.source`: `osm` | `editorial`.
+- Имена полей можно уточнить, смысл из `Docs/STAGE-02-postgis.md` — нет.
+
+Импорт идемпотентный. Публичный Overpass в скриптах запрещён (нет `overpass-api.de`). RGZ резать тем же GeoJSON, что OSM.
+
+Этап 2 закрыт только если `scripts/stage02-verify.sql` выходит **0**. Пороги D1–D4 в `Docs/PERFORMANCE.md`. Счётчики писать в `data/README.md`.
+
+Не делать в ETL-чате: Meilisearch, Fastify, React, админку, Valhalla/OTP, пересборку тайлов.

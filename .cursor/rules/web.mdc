@@ -1,0 +1,19 @@
+---
+description: Клиент React + MapLibre + Capacitor
+globs: apps/web/**,apps/mobile/**,infra/preview/**
+alwaysApply: false
+---
+
+# Клиент
+
+Один UI на веб и телефон. Capacitor только оборачивает `dist/`. Отдельный нативный UI запрещён.
+
+Паттерн 2ГИС: карта на весь экран, поиск сверху, карточка снизу. Состояние в URL: `/?org=` `/?bldg=` `/?from=&to=&mode=`.
+
+Слои: подложка PMTiles; поверх — выбранное здание (GeoJSON из API, не из тайлов), пины, маршрут, остановки линии. Стиль — OpenMapTiles, не Protomaps Basemaps.
+
+Центр без геолокации: **19.845, 45.255**. Геолокация только с разрешения; `watchPosition` не в фоне.
+
+Языки UI: sr-Latn (основной), ru, en. Адреса: sr-Latn + sr-Cyrl.
+
+Клиент не содержит URL Valhalla/OTP/PostGIS и ключей БД. Сборка: Vite.

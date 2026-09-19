@@ -1,0 +1,87 @@
+name: zylos
+
+services:
+  postgis:
+    image: postgis/postgis:16-3.5
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-zylos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zylos}
+      POSTGRES_DB: ${POSTGRES_DB:-zylos}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgis/init.sql:/docker-entrypoint-initdb.d/10-postgis.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  tiles:
+    image: caddy:2-alpine
+    depends_on:
+      tile-api:
+        condition: service_started
+    ports:
+      - "8080:80"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./infra/preview:/srv/preview:ro
+      - ./data/tiles:/srv/tiles:ro
+    restart: unless-stopped
+
+  tile-api:
+    image: protomaps/go-pmtiles:latest
+    command: ["serve", "/tiles", "--port=8080"]
+    volumes:
+      - ./data/tiles:/tiles:ro
+    restart: unless-stopped
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.11
+    container_name: meilisearch
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_ENV: development
+    ports:
+      - "127.0.0.1:7700:7700"
+    volumes:
+      - meili_data:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:7700/health || wget -qO- http://127.0.0.1:7700/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./apps/api
+    container_name: api
+    depends_on:
+      postgis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-zylos}:${POSTGRES_PASSWORD:-zylos}@postgis:5432/${POSTGRES_DB:-zylos}
+      MEILI_URL: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      PORT: "3000"
+    ports:
+      - "127.0.0.1:${API_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.mjs"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  meili_data:

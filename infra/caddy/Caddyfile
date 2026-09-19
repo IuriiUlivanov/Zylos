@@ -1,0 +1,24 @@
+:80 {
+	header {
+		Access-Control-Allow-Origin *
+		Access-Control-Expose-Headers "Content-Range, Accept-Ranges, Content-Length, ETag"
+		Access-Control-Allow-Headers "Range, If-Match, If-None-Match"
+	}
+
+	@options method OPTIONS
+	respond @options 204
+
+	handle_path /mvt/* {
+		reverse_proxy tile-api:8080
+	}
+
+	handle_path /tiles/* {
+		root * /srv/tiles
+		file_server
+	}
+
+	handle {
+		root * /srv/preview
+		file_server
+	}
+}

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Docs/design/MOBILE-DESIGN.md §3.1 — keep in sync with apps/web/src/theme/tokens.css -->
+    <color name="map_bg">#EFEBE3</color>
+    <color name="paper">#FFFFFF</color>
+    <color name="ink">#1F1F1F</color>
+    <color name="muted">#6A655C</color>
+    <color name="line">#E4DDD3</color>
+    <color name="accent">#00B341</color>
+    <color name="accent_soft">#E7F8EC</color>
+    <color name="addr">#5B6B7A</color>
+    <color name="danger">#B42318</color>
+    <color name="launcher_bg">#00B341</color>
+    <color name="sheet_handle">#D0CBC3</color>
+    <color name="close_btn_bg">#F3EFE8</color>
+    <color name="toast_bg">#2B2B2B</color>
+    <color name="highlight_fill">#5900B341</color>
+    <color name="highlight_outline">#008A32</color>
+</resources>

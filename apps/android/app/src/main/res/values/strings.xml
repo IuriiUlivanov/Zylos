@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Zylos</string>
+    <string name="search_hint">Pretraga…</string>
+    <string name="search_cd">Polje pretrage</string>
+    <string name="search_dropdown_cd">Rezultati pretrage</string>
+    <string name="map_cd">Mapa Novog Sada</string>
+    <string name="map_missing_tiles">Nedostaje novi-sad.mbtiles. Pokrenite scripts/build-mbtiles.ps1.</string>
+    <string name="nema_zgrade">Nema zgrade na ovoj tački</string>
+    <string name="van_grada">Van grada Novi Sad</string>
+    <string name="nema_veze">Nema veze sa serverom</string>
+    <string name="nista_nadjeno">Ništa nije pronađeno</string>
+    <string name="pretraga_nedostupna">Pretraga privremeno nedostupna</string>
+    <string name="nedavno">Nedavno</string>
+    <string name="adresa">Adresa</string>
+    <string name="organizacija">Organizacija</string>
+    <string name="kind_org">ORG</string>
+    <string name="kind_adr">ADR</string>
+    <string name="obrisi_cd">Obriši</string>
+    <string name="ucitavam">Učitavam…</string>
+    <string name="nema_org">Nema organizacija u zgradi</string>
+    <string name="zgrada">Zgrada</string>
+    <string name="zatvori">×</string>
+    <string name="zoom_in_cd">Uvećaj</string>
+    <string name="zoom_out_cd">Umanji</string>
+    <string name="org_count_one">%1$d organizacija</string>
+    <string name="org_count_few">%1$d organizacije</string>
+    <string name="org_count_many">%1$d organizacija</string>
+    <string name="org_field_address">Adresa</string>
+    <string name="org_field_floor">Sprat</string>
+    <string name="org_field_phone">Telefon</string>
+    <string name="org_field_hours">Radno vreme</string>
+    <string name="org_field_website">Sajt</string>
+    <string name="zatvori_cd">Zatvori</string>
+    <string name="sheet_cd">Kartica zgrade</string>
+</resources>

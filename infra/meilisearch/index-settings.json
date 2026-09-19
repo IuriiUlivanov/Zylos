@@ -1,0 +1,22 @@
+{
+  "searchableAttributes": [
+    "label",
+    "name",
+    "street",
+    "street_sr_cyrl",
+    "housenumber",
+    "category_name",
+    "tags"
+  ],
+  "filterableAttributes": ["kind", "category_slug", "source"],
+  "sortableAttributes": ["_geo"],
+  "rankingRules": [
+    "words",
+    "typo",
+    "proximity",
+    "attribute",
+    "sort",
+    "exactness"
+  ],
+  "typoTolerance": { "enabled": true }
+}

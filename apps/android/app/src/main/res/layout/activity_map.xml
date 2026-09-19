@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinator"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/map_bg">
+
+    <org.maplibre.android.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/map_cd" />
+
+    <rs.zylos.novisad.ui.sheet.PassThroughCoordinatorLayout
+        android:id="@+id/sheetHost"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/search_dock_height"
+        android:clickable="false"
+        android:clipChildren="true"
+        android:focusable="false"
+        android:importantForAccessibility="no">
+
+        <LinearLayout
+            android:id="@+id/buildingSheet"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_sheet"
+            android:clickable="true"
+            android:contentDescription="@string/sheet_cd"
+            android:elevation="@dimen/elevation_sheet"
+            android:focusable="true"
+            android:orientation="vertical"
+            app:behavior_draggable="true"
+            app:behavior_fitToContents="false"
+            app:behavior_halfExpandedRatio="0.5"
+            app:behavior_hideable="true"
+            app:behavior_peekHeight="@dimen/sheet_step1_height"
+            app:behavior_skipCollapsed="false"
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+            <FrameLayout
+                android:id="@+id/sheetHandleHit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/sheet_cd">
+
+                <LinearLayout
+                    android:id="@+id/sheetHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="@dimen/search_height"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="4dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/sheetTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textColor="@color/ink"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/sheetSubtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textColor="@color/muted"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/sheetClose"
+                        android:layout_width="@dimen/sheet_close_size"
+                        android:layout_height="@dimen/sheet_close_size"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_close_btn"
+                        android:contentDescription="@string/zatvori_cd"
+                        android:gravity="center"
+                        android:text="@string/zatvori"
+                        android:textColor="@color/muted"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/sheetHandle"
+                    android:layout_width="@dimen/sheet_handle_width"
+                    android:layout_height="@dimen/sheet_handle_height"
+                    android:layout_gravity="top|center_horizontal"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/sheet_handle" />
+            </FrameLayout>
+
+        <ProgressBar
+            android:id="@+id/sheetLoading"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <FrameLayout
+            android:id="@+id/sheetBody"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/buildingContent"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/orgList"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:clipToPadding="false"
+                    android:paddingBottom="16dp" />
+
+                <TextView
+                    android:id="@+id/orgEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:text="@string/nema_org"
+                    android:textColor="@color/muted"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/orgContent"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingBottom="24dp">
+
+                    <include
+                        android:id="@+id/orgAddressRow"
+                        layout="@layout/item_org_field" />
+
+                    <include
+                        android:id="@+id/orgFloorRow"
+                        layout="@layout/item_org_field" />
+
+                    <include
+                        android:id="@+id/orgPhoneRow"
+                        layout="@layout/item_org_field" />
+
+                    <include
+                        android:id="@+id/orgHoursRow"
+                        layout="@layout/item_org_field" />
+
+                    <include
+                        android:id="@+id/orgWebsiteRow"
+                        layout="@layout/item_org_field" />
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+        </FrameLayout>
+        </LinearLayout>
+    </rs.zylos.novisad.ui.sheet.PassThroughCoordinatorLayout>
+
+    <LinearLayout
+        android:id="@+id/searchDock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:elevation="16dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/margin_screen"
+        android:translationZ="16dp">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/searchDropdownCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:contentDescription="@string/search_dropdown_cd"
+            android:focusable="true"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/paper"
+            app:cardCornerRadius="@dimen/radius_dropdown"
+            app:cardElevation="@dimen/elevation_search">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/searchHistoryHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="4dp"
+                    android:text="@string/nedavno"
+                    android:textColor="@color/muted"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/searchStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp"
+                    android:textColor="@color/muted"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+                <rs.zylos.novisad.ui.search.MaxHeightRecyclerView
+                    android:id="@+id/searchDropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="true"
+                    android:overScrollMode="ifContentScrolls" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/searchChrome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:contentDescription="@string/search_cd"
+            android:focusable="true"
+            app:cardBackgroundColor="@color/paper"
+            app:cardCornerRadius="@dimen/radius_search"
+            app:cardElevation="@dimen/elevation_search">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/search_height"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <ImageView
+                    android:id="@+id/searchIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="@string/search_cd"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/muted" />
+
+                <EditText
+                    android:id="@+id/searchInput"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="@string/search_hint"
+                    android:imeOptions="actionSearch"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:paddingHorizontal="10dp"
+                    android:textColor="@color/ink"
+                    android:textColorHint="@color/muted"
+                    android:textSize="15sp" />
+
+                <ProgressBar
+                    android:id="@+id/searchSpinner"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/searchClear"
+                    android:layout_width="@dimen/touch_min"
+                    android:layout_height="@dimen/touch_min"
+                    android:contentDescription="@string/obrisi_cd"
+                    android:gravity="center"
+                    android:text="@string/zatvori"
+                    android:textColor="@color/muted"
+                    android:textSize="22sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/mapControls"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_marginEnd="@dimen/margin_screen"
+        android:layout_marginBottom="@dimen/search_dock_height"
+        android:elevation="@dimen/elevation_control"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/zoomIn"
+            android:layout_width="@dimen/touch_min"
+            android:layout_height="@dimen/touch_min"
+            android:background="@drawable/bg_map_control"
+            android:contentDescription="@string/zoom_in_cd"
+            android:elevation="@dimen/elevation_control"
+            android:src="@drawable/ic_zoom_in" />
+
+        <ImageButton
+            android:id="@+id/zoomOut"
+            android:layout_width="@dimen/touch_min"
+            android:layout_height="@dimen/touch_min"
+            android:layout_marginTop="@dimen/map_control_gap"
+            android:background="@drawable/bg_map_control"
+            android:contentDescription="@string/zoom_out_cd"
+            android:elevation="@dimen/elevation_control"
+            android:src="@drawable/ic_zoom_out" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/mapError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="16dp"
+        android:background="@color/paper"
+        android:elevation="20dp"
+        android:padding="12dp"
+        android:textColor="@color/danger"
+        android:visibility="gone" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

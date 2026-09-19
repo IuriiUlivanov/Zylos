@@ -1,0 +1,25 @@
+---
+description: SLO v1 — фича не done без порога
+globs: apps/**,infra/caddy/**,infra/preview/**
+alwaysApply: false
+---
+
+# Performance
+
+Цифры в `Docs/PERFORMANCE.md` — обязательные SLO. Замер: p95, n≥30 после прогрева, профиль Web-mid 4G (не localhost).
+
+Нельзя: скачивать весь `.pmtiles` без Range; проксировать тайлы через Fastify; спиннер без timeout.
+
+| ID | Порог |
+|---|---|
+| T5 | PMTiles города ≤ 15 MB |
+| L1 | gzip JS+CSS ≤ 350 KB без MapLibre, ≤ 900 KB с ним |
+| S1 | search p95 ≤ 120 мс CPU, ≤ 200 мс e2e |
+| S2 | ≤ 15 документов |
+| B2 | buildings/at p95 ≤ 100 мс (GIST) |
+| B5 | bbox ≤ 200 объектов |
+| R1–R3 | walk/bike ≤ 400 мс, car ≤ 500 мс; timeout 3 с |
+| R4 | transit ≤ 1.5 с; timeout 8 с |
+| R8 | вне города 422 ≤ 30 мс |
+
+Деградация: Meilisearch down → search 503 ≤ 150 мс; Valhalla down → 504 ≤ 3 с; OTP down → walk/car живы.

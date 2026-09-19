@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zylos — диагностика тайлов</title>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+    <style>
+      html, body, #map { width: 100%; height: 100%; margin: 0; }
+      body { font: 14px/1.4 system-ui, sans-serif; color: #2b2b2b; }
+      .notice {
+        position: absolute;
+        z-index: 1;
+        top: 12px;
+        left: 12px;
+        max-width: min(360px, calc(100% - 48px));
+        padding: 10px 12px 10px 14px;
+        border-radius: 8px;
+        border-left: 3px solid #00B341;
+        background: rgb(255 255 255 / 94%);
+        box-shadow: 0 2px 12px rgb(0 0 0 / 14%);
+      }
+      .notice strong, .notice span { display: block; }
+      .notice span { margin-top: 3px; color: #6A655C; font-size: 12px; }
+      .maplibregl-ctrl-group { border-radius: 8px !important; overflow: hidden; }
+    </style>
+  </head>
+  <body>
+    <div class="notice">
+      <strong>Этап 1 — диагностика тайлов, не продукт</strong>
+      <span>Стиль как у 2ГИС. Здания с z14, 3D и номера домов — с z16.</span>
+      <span id="diagnostics">Загрузка тайлов…</span>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+    <script>
+      const diagnostics = document.getElementById("diagnostics");
+
+      function showError(message) {
+        diagnostics.textContent = message;
+        diagnostics.style.color = "#b42318";
+      }
+
+      fetch("./style.json")
+        .then((response) => {
+          if (!response.ok) throw new Error("Не удалось загрузить style.json");
+          return response.json();
+        })
+        .then((style) => {
+          if (style.sources?.noviSad) {
+            style.sources.noviSad.tiles = [
+              `${location.origin}/mvt/novi-sad/{z}/{x}/{y}.mvt`
+            ];
+          }
+          if (style.sources?.waterFill) {
+            style.sources.waterFill.data = `${location.origin}/water-fill.geojson`;
+          }
+          const map = new maplibregl.Map({
+            container: "map",
+            center: [19.845, 45.255],
+            zoom: 14,
+            minZoom: 10,
+            maxZoom: 18,
+            maxPitch: 60,
+            hash: true,
+            fadeDuration: 200,
+            style
+          });
+
+          window.__zylosMap = map;
+          window.__zylosMapError = null;
+
+          map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+          map.addControl(new maplibregl.ScaleControl({ unit: "metric" }));
+
+          map.on("error", (event) => {
+            const message = event.error?.message || String(event.error || "unknown");
+            window.__zylosMapError = message;
+            showError(`Ошибка карты: ${message}`);
+          });
+
+          map.on("idle", () => {
+            const sourceBuildings = map.querySourceFeatures("noviSad", {
+              sourceLayer: "building"
+            }).length;
+            const visibleLayers = ["buildings", "buildings-3d"].filter((id) => map.getLayer(id));
+            const renderedBuildings = map.queryRenderedFeatures({
+              layers: visibleLayers
+            }).length;
+            diagnostics.style.color = "";
+            diagnostics.textContent =
+              `z${map.getZoom().toFixed(1)} · building: ${sourceBuildings} в тайлах, ` +
+              `${renderedBuildings} на экране`;
+          });
+        })
+        .catch((error) => showError(`Ошибка карты: ${error.message}`));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+---
+description: Fastify API /v1 — контракт, ошибки, оркестрация
+globs: apps/api/**,packages/shared/**
+alwaysApply: false
+---
+
+# API
+
+Префикс `/v1`. JSON. CORS только свой веб-origin. OpenAPI позже; смысл операций уже фиксирован.
+
+| Метод | Назначение |
+|---|---|
+| `GET /v1/search` | `q`, `lat`, `lon`, `limit` — address + organization |
+| `GET /v1/orgs/:id` | карточка |
+| `GET /v1/orgs` | bbox + category, лимит пинов |
+| `GET /v1/buildings/at` | `lon`,`lat` → здание или 404 |
+| `GET /v1/buildings/:id` | контур + адреса + организации |
+| `GET /v1/addresses/:id` | адрес + здание |
+| `POST /v1/route` | `from`,`to`,`mode`: walk \| bike \| car \| transit |
+| `GET /v1/transit/routes` | линии GTFS |
+| `PUT /v1/admin/orgs/:id` | editorial, отдельно от публичного |
+
+Ошибки: `404` нет объекта · `422` точка вне `city_boundary` (без маршрута «на Белград») · `504` роутер не успел. Поиск без Meilisearch — быстрый 503, не hang.
+
+Meilisearch — проекция; после editorial обязателен reindex. TypeScript. Ключи БД и URL Valhalla на клиент не отдавать.

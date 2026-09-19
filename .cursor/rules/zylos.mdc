@@ -1,0 +1,30 @@
+---
+description: Инварианты Zylos — город, стек, запреты, как читать доки
+alwaysApply: true
+---
+
+# Zylos
+
+Клон 2ГИС для **Grad Novi Sad**, OSM relation **1649672**. Extract: `data/osm/novi-sad.osm.pbf`. Граница: `data/boundary/grad-novi-sad.geojson`. БД: `zylos`.
+
+Доки: `Docs/ARCHITECTURE.md`, `Docs/PLAN.md`, `Docs/PERFORMANCE.md`, `Docs/MOBILE.md`, `Docs/design/` (UI — ориентир 2GIS, см. `MOBILE-DESIGN.md`). Этап — только `@Docs/STAGE-NN-*.md` текущего этапа, не копировать PLAN целиком. Текущий клиентский этап: [STAGE-12-android-search.md](../../Docs/STAGE-12-android-search.md).
+
+## Стек (имена контейнеров не менять)
+
+`web` React+MapLibre+Vite — **референс контракта и стиля, не развиваем** · `android` Kotlin + MapLibre GL Native · `api` Fastify `/v1` · `postgis` · `meilisearch` · `tiles` Caddy+PMTiles · `valhalla` · `otp` · `photon` · `etl` по команде.
+
+Клиент **не** ходит в Valhalla/OTP/PostGIS/Meilisearch. Online-тайлы — напрямую с `tiles` (PMTiles Range). Офлайн на телефоне — MBTiles. API тайлы не проксирует. Бэкенд **не** переписывать на Go/Rust.
+
+## Запрещено
+
+Google Maps / Mapbox как подложка · Capacitor / Flutter / React Native / второй веб-UI · Overpass в runtime · скрейп PlanPlus / 011info / NSmart · свой A* вместо Valhalla/OTP · разные границы города у сервисов · переписывать геобинарники · Google Places / Pelias · менять JSON-форму `/v1` в клиенте (Kotlin DTO зеркалят `apps/api/src/types`).
+
+## Данные
+
+Один extract на все сервисы. `organization.source`: `osm` | `editorial` — импорт не затирает editorial. Геометрия **EPSG:4326**. ODbL: атрибуция OSM/RGZ, share-alike на производную БД.
+
+Секреты только `.env`, не в git. Не коммитить без явной просьбы.
+
+## Работа агента
+
+Один чат — один пункт этапа. Менять только названные пути. Бинарники (`*.pbf`, `*.pmtiles`, `*.mbtiles`, RGZ, zip в `data/`) не читать — смотреть `data/README.md` и скрипты. Фича не done без порога из `Docs/PERFORMANCE.md`.

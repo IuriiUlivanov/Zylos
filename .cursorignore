@@ -1,0 +1,54 @@
+# Secrets (Cursor already skips .env; keep explicit)
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+**/node_modules/
+**/dist/
+**/build/
+**/.vite/
+**/coverage/
+
+# OSM extracts, tiles, Planetiler, RGZ dumps — binary, huge
+data/osm/
+data/tiles/
+data/rgz/
+data/sources/
+data/planetiler-tmp/
+data/tmp/
+data/tile_weights.tsv.gz
+
+*.pbf
+*.pbf.md5
+*.pmtiles
+*.mbtiles
+*.gpkg
+*.shp
+*.shx
+*.dbf
+*.sqlite
+*.osm
+*.osm.xml
+
+# Archives and dumps
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.gz
+*.dump
+*.sql.gz
+
+# Map-verify / screenshots (pixels, not code)
+scripts/map-verify/output/
+scripts/map-verify/screenshots/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.mp4
+*.webm
+
+# Logs
+*.log

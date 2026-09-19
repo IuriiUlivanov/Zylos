@@ -1,0 +1,14 @@
+{
+  "name": "zylos-map-verify",
+  "private": true,
+  "type": "module",
+  "description": "Stage 1 map acceptance checks for Zylos preview tiles",
+  "scripts": {
+    "test": "node verify.mjs"
+  },
+  "dependencies": {
+    "@mapbox/vector-tile": "^2.0.4",
+    "pbf": "^4.0.1",
+    "puppeteer-core": "^24.15.0"
+  }
+}
