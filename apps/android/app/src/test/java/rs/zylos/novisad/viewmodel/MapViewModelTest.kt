@@ -99,6 +99,48 @@ class MapViewModelTest {
         assertTrue(vm.state.value.highlightJson != null)
     }
 
+    @Test
+    fun orgPinClearsHighlightOfOtherBuilding() = runTest(dispatcher) {
+        val buildings = FakeBuildings(
+            atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
+            byIdFn = { id -> BuildingDetailResult.Found(sampleBuilding(id)) },
+        )
+        val orgs = FakeOrgs { id ->
+            OrgDetailResult.Found(sampleOrg().copy(id = id, building_id = "b2"))
+        }
+        val vm = MapViewModel(buildings, orgs)
+        vm.onMapClick(19.84, 45.25)
+        advanceUntilIdle()
+        assertEquals("b1", vm.state.value.building?.id)
+
+        vm.onOrgPinClick("org:osm:n99")
+        assertEquals(null, vm.state.value.highlightJson)
+        advanceUntilIdle()
+
+        assertEquals(SheetMode.Organization, vm.state.value.mode)
+        assertEquals("org:osm:n99", vm.state.value.org?.id)
+        assertEquals("b2", vm.state.value.building?.id)
+        assertTrue(vm.state.value.highlightJson!!.contains("FeatureCollection"))
+    }
+
+    @Test
+    fun orgWithoutBuildingClearsHighlight() = runTest(dispatcher) {
+        val buildings = FakeBuildings(
+            atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
+            byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
+        )
+        val orgs = FakeOrgs { OrgDetailResult.Found(sampleOrg().copy(building_id = null)) }
+        val vm = MapViewModel(buildings, orgs)
+        vm.onMapClick(19.84, 45.25)
+        advanceUntilIdle()
+        vm.onOrgPinClick("org:osm:n1")
+        advanceUntilIdle()
+
+        assertEquals(SheetMode.Organization, vm.state.value.mode)
+        assertEquals(null, vm.state.value.building)
+        assertEquals(null, vm.state.value.highlightJson)
+    }
+
     private class FakeBuildings(
         private val atFn: suspend (Double, Double) -> BuildingAtResult,
         private val byIdFn: suspend (String) -> BuildingDetailResult,

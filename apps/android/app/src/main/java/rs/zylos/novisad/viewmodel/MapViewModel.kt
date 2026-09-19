@@ -267,6 +267,10 @@ class MapViewModel(
         if (id.isNullOrBlank() || _state.value.dropdownOpen) {
             return
         }
+        val current = _state.value.building
+        if (current != null && current.organizations.none { it.id == id }) {
+            _state.value = _state.value.copy(highlightJson = null)
+        }
         onOrgSelected(id)
     }
 
@@ -336,11 +340,11 @@ class MapViewModel(
 
     fun onOrgSelected(id: String) {
         val request = ++generation
-        val building = _state.value.building
+        val previousBuilding = _state.value.building
         pickJob?.cancel()
         pickJob = viewModelScope.launch {
             _state.value = _state.value.copy(
-                mode = if (building != null) SheetMode.Building else SheetMode.Loading,
+                mode = if (previousBuilding != null) SheetMode.Building else SheetMode.Loading,
                 message = null,
                 haptic = false,
                 generation = request,
@@ -348,11 +352,15 @@ class MapViewModel(
             when (val result = orgs.byId(id)) {
                 is OrgDetailResult.Found -> {
                     if (request != generation) return@launch
+                    val org = result.body
+                    val building = resolveOrgBuilding(org.building_id, previousBuilding)
+                    if (request != generation) return@launch
                     _state.value = _state.value.copy(
                         mode = SheetMode.Organization,
-                        org = result.body,
+                        org = org,
                         building = building,
                         peek = null,
+                        highlightJson = building?.let { BuildingHighlight.collectionJson(it.geometry) },
                         message = null,
                         haptic = false,
                         generation = request,
@@ -463,6 +471,22 @@ class MapViewModel(
                     if (request != orgPinsGeneration) return@launch
                 }
             }
+        }
+    }
+
+    private suspend fun resolveOrgBuilding(
+        buildingId: String?,
+        previous: BuildingDetailResponse?,
+    ): BuildingDetailResponse? {
+        if (buildingId == null) {
+            return null
+        }
+        if (previous?.id == buildingId) {
+            return previous
+        }
+        return when (val detail = buildings.byId(buildingId)) {
+            is BuildingDetailResult.Found -> detail.body
+            is BuildingDetailResult.NotFound, is BuildingDetailResult.Network -> null
         }
     }
 
