@@ -14,6 +14,8 @@ UI/UX-документация проекта. Продуктовый ориен
 | [MOBILE-POI-ZOOM.md](MOBILE-POI-ZOOM.md) | Плотность POI и org-пинов на карте по zoom (browse / search) |
 | [screens/README.md](screens/README.md) | SVG-мокапы экранов по кейсам |
 | [object-card/README.md](object-card/README.md) | Карточка объекта: 3 шага, жесты, макеты |
+| [route/README.md](route/README.md) | Маршрут transit v2: tab bar, route panel, SVG |
+| [object-card/versions/](object-card/versions/README.md) | Changelog макетов (v2 bottom tabs) |
 
 ## Связанные документы
 

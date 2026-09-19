@@ -333,7 +333,7 @@ ru/en — после v1; не хардкодить в Kotlin.
 | [STAGE-11-android-building.md](../STAGE-11-android-building.md) | Bottom sheet building/org |
 | [STAGE-12-android-search.md](../STAGE-12-android-search.md) | Search bar + dropdown + marker |
 | [STAGE-13-android-poi.md](../STAGE-13-android-poi.md) | Org-pins, Search Multi |
-| Transit (5.2) | Route sheet, линии на карте |
+| [route/README.md](route/README.md) | Route chrome, sheet, линии на карте — [STAGE-14](../STAGE-14-android-transit.md) |
 
 При расхождении этаповой спеки и этого файла — **этот файл** задаёт визуал; этап — поведение и API.
 

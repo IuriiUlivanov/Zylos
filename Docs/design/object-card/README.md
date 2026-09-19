@@ -2,6 +2,8 @@
 
 Спецификация поведения и размеров **object sheet** — bottom sheet над search dock. Палитра и токены — [MOBILE-DESIGN.md](../MOBILE-DESIGN.md) §3.
 
+> **v2 (целевая):** нижняя полоса **Pretraga | Ruta** — см. [versions/v2-bottom-tabs-route-panel.md](versions/v2-bottom-tabs-route-panel.md). Object sheet якорится **над tab bar**, не над search field.
+
 ![Здание, шаг 1 — минимальная карточка](01-building-step1.svg)
 
 ## Открытие

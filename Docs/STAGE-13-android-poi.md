@@ -23,7 +23,7 @@ STAGE-12 доказал autocomplete и один маркер выбранног
 
 Без этого этапа PostGIS bbox и прогрессивный POI из [design/MOBILE-POI-ZOOM.md](design/MOBILE-POI-ZOOM.md) не проверяются end-to-end на Android. Пороги **B5**, **T4** из [PERFORMANCE.md](PERFORMANCE.md) становятся обязательными для сценария «browse + search multi».
 
-После STAGE-13 можно переходить к transit UI — [MOBILE.md](MOBILE.md) §6 этап 5.2.
+После STAGE-13 можно переходить к transit — [STAGE-14-android-transit.md](STAGE-14-android-transit.md).
 
 ---
 
@@ -378,4 +378,4 @@ browse-пины скрыты); unit-тесты; stage13-verify.ps1.
 
 ## 9. Выход в следующий этап
 
-После зелёного `stage13-verify` → transit UI и `POST /v1/route` по [MOBILE.md](MOBILE.md) §6 этап 5.2. Опционально v1.1: `display_rank` в API, кластеризация org-pins если **T4** не проходит на Phone-mid.
+После зелёного `stage13-verify` → [STAGE-14-android-transit.md](STAGE-14-android-transit.md) (transit UI + `POST /v1/route`). Опционально v1.1: `display_rank` в API, кластеризация org-pins если **T4** не проходит на Phone-mid.

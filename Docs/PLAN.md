@@ -18,6 +18,8 @@
 - Этап 10 (вместо Capacitor): [STAGE-10-android.md](STAGE-10-android.md)
 - Этап 11 (Android, здание + sheet): [STAGE-11-android-building.md](STAGE-11-android-building.md)
 - Этап 12 (Android, поиск): [STAGE-12-android-search.md](STAGE-12-android-search.md)
+- Этап 13 (Android, org-пины): [STAGE-13-android-poi.md](STAGE-13-android-poi.md)
+- Этап 14 (Android, transit): [STAGE-14-android-transit.md](STAGE-14-android-transit.md)
 
 ---
 
@@ -246,7 +248,7 @@ LLM не заменяет геоинструменты. Детерминиров
 
 ## Первый конкретный шаг
 
-Этапы 1–5 закрыты. Карта Android: [STAGE-10-android.md](STAGE-10-android.md). Тап по зданию: [STAGE-11-android-building.md](STAGE-11-android-building.md). Autocomplete: [STAGE-12-android-search.md](STAGE-12-android-search.md). Org-пины и Search Multi: [STAGE-13-android-poi.md](STAGE-13-android-poi.md). Следующий шаг — transit UI (`POST /v1/route`) по [MOBILE.md](MOBILE.md) §6 этап 5.2. OTP/GTFS — параллельно, не блокер карты.
+Этапы 1–5 закрыты. Карта Android: [STAGE-10-android.md](STAGE-10-android.md). Тап по зданию: [STAGE-11-android-building.md](STAGE-11-android-building.md). Autocomplete: [STAGE-12-android-search.md](STAGE-12-android-search.md). Org-пины и Search Multi: [STAGE-13-android-poi.md](STAGE-13-android-poi.md). Следующий шаг — [STAGE-14-android-transit.md](STAGE-14-android-transit.md) (`POST /v1/route` + transit UI). GTFS JGSP — предусловие этапа 14.
 
 ---
 

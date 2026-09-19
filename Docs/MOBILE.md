@@ -374,12 +374,12 @@ Deep links (v1 опционально): `zylos://org/{id}`, `zylos://building/{i
 
 ### Этап 5 — Поиск и маршрут ОТ
 
-Спека autocomplete: [STAGE-12-android-search.md](STAGE-12-android-search.md). Org-пины: [STAGE-13-android-poi.md](STAGE-13-android-poi.md) + [design/MOBILE-POI-ZOOM.md](design/MOBILE-POI-ZOOM.md).
+Спека autocomplete: [STAGE-12-android-search.md](STAGE-12-android-search.md). Org-пины: [STAGE-13-android-poi.md](STAGE-13-android-poi.md) + [design/MOBILE-POI-ZOOM.md](design/MOBILE-POI-ZOOM.md). Transit: [STAGE-14-android-transit.md](STAGE-14-android-transit.md).
 
 | # | Задача | Критерий |
 |---|---|---|
 | 5.1 | Autocomplete → `/v1/search` | S1, S3; Room — история — [STAGE-12-android-search.md](STAGE-12-android-search.md) |
-| 5.2 | Маршрут transit: линия, пунктир пешком, номера линий | R4, R9 |
+| 5.2 | Маршрут transit: линия, пунктир пешком, номера линий | R4, R9 — [STAGE-14-android-transit.md](STAGE-14-android-transit.md) |
 | 5.3 | Long-press / поиск для From/To | Ручные сценарии в городе |
 
 ### Этап 6 — Оптимизация и тестирование
