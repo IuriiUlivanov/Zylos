@@ -50,4 +50,11 @@ class SheetAnchorsTest {
         assertFalse(SheetAnchors.bodyVisible(SheetMode.Peek, SheetStep.Half))
         assertFalse(SheetAnchors.bodyVisible(SheetMode.Peek, SheetStep.Full))
     }
+
+    @Test
+    fun searchListShowsBodyFromStepTwo() {
+        assertFalse(SheetAnchors.bodyVisible(SheetMode.SearchList, SheetStep.Minimal))
+        assertTrue(SheetAnchors.bodyVisible(SheetMode.SearchList, SheetStep.Half))
+        assertTrue(SheetAnchors.headerSubtitleVisible(SheetMode.SearchList, SheetStep.Half))
+    }
 }

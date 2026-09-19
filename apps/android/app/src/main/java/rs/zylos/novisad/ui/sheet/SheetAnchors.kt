@@ -35,13 +35,14 @@ object SheetAnchors {
         return mode == SheetMode.Building ||
             mode == SheetMode.Loading ||
             mode == SheetMode.Organization ||
-            mode == SheetMode.Peek
+            mode == SheetMode.Peek ||
+            mode == SheetMode.SearchList
     }
 
     fun bodyVisible(mode: SheetMode, step: SheetStep): Boolean {
         if (step == SheetStep.Minimal) {
             return false
         }
-        return mode == SheetMode.Building || mode == SheetMode.Organization
+        return mode == SheetMode.Building || mode == SheetMode.Organization || mode == SheetMode.SearchList
     }
 }

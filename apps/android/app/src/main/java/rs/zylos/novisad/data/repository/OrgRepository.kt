@@ -1,6 +1,7 @@
 package rs.zylos.novisad.data.repository
 
 import rs.zylos.novisad.data.api.OrgDetailResponse
+import rs.zylos.novisad.data.api.OrgPin
 import rs.zylos.novisad.data.api.ZylosApi
 import java.io.IOException
 
@@ -10,8 +11,20 @@ sealed class OrgDetailResult {
     data object Network : OrgDetailResult()
 }
 
+sealed class OrgBboxResult {
+    data class Ok(val pins: List<OrgPin>) : OrgBboxResult()
+    data object Network : OrgBboxResult()
+}
+
 interface OrgRepository {
     suspend fun byId(id: String): OrgDetailResult
+    suspend fun inBbox(
+        minLon: Double,
+        minLat: Double,
+        maxLon: Double,
+        maxLat: Double,
+        limit: Int,
+    ): OrgBboxResult
 }
 
 class HttpOrgRepository(private val api: ZylosApi) : OrgRepository {
@@ -28,6 +41,25 @@ class HttpOrgRepository(private val api: ZylosApi) : OrgRepository {
             }
         } catch (_: IOException) {
             OrgDetailResult.Network
+        }
+    }
+
+    override suspend fun inBbox(
+        minLon: Double,
+        minLat: Double,
+        maxLon: Double,
+        maxLat: Double,
+        limit: Int,
+    ): OrgBboxResult {
+        return try {
+            val bbox = "$minLon,$minLat,$maxLon,$maxLat"
+            val response = api.orgs(bbox, limit)
+            when (response.code()) {
+                200 -> OrgBboxResult.Ok(response.body().orEmpty())
+                else -> OrgBboxResult.Network
+            }
+        } catch (_: IOException) {
+            OrgBboxResult.Network
         }
     }
 }

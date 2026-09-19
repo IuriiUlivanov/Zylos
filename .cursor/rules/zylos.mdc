@@ -7,7 +7,7 @@ alwaysApply: true
 
 Клон 2ГИС для **Grad Novi Sad**, OSM relation **1649672**. Extract: `data/osm/novi-sad.osm.pbf`. Граница: `data/boundary/grad-novi-sad.geojson`. БД: `zylos`.
 
-Доки: `Docs/ARCHITECTURE.md`, `Docs/PLAN.md`, `Docs/PERFORMANCE.md`, `Docs/MOBILE.md`, `Docs/design/` (UI — ориентир 2GIS, см. `MOBILE-DESIGN.md`). Этап — только `@Docs/STAGE-NN-*.md` текущего этапа, не копировать PLAN целиком. Текущий клиентский этап: [STAGE-12-android-search.md](../../Docs/STAGE-12-android-search.md).
+Доки: `Docs/ARCHITECTURE.md`, `Docs/PLAN.md`, `Docs/PERFORMANCE.md`, `Docs/MOBILE.md`, `Docs/design/` (UI — ориентир 2GIS, см. `MOBILE-DESIGN.md`). Этап — только `@Docs/STAGE-NN-*.md` текущего этапа, не копировать PLAN целиком. Текущий клиентский этап: [STAGE-13-android-poi.md](../../Docs/STAGE-13-android-poi.md).
 
 ## Стек (имена контейнеров не менять)
 

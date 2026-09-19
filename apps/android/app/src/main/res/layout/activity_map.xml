@@ -145,6 +145,14 @@
                     android:visibility="gone" />
             </LinearLayout>
 
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/searchResultList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingBottom="16dp"
+                android:visibility="gone" />
+
             <androidx.core.widget.NestedScrollView
                 android:id="@+id/orgContent"
                 android:layout_width="match_parent"
@@ -240,6 +248,20 @@
                     android:layout_height="wrap_content"
                     android:nestedScrollingEnabled="true"
                     android:overScrollMode="ifContentScrolls" />
+
+                <TextView
+                    android:id="@+id/showAllOnMap"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp"
+                    android:text="@string/prikazi_sve_na_karti"
+                    android:textColor="@color/accent"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

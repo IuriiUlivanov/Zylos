@@ -1,6 +1,19 @@
 package rs.zylos.novisad.map
 
 object MapStyleFactory {
+    val POI_DOT_LAYER_IDS = listOf(
+        "poi-dot",
+        "poi-dot-16",
+        "poi-dot-17",
+        "poi-dot-18",
+        "poi-dot-19",
+    )
+    val POI_LABEL_LAYER_IDS = listOf(
+        "poi-label",
+        "poi-label-18",
+        "poi-label-19",
+    )
+
     private val mvtTiles = Regex(
         """"tiles"\s*:\s*\[\s*"/mvt/novi-sad/\{z\}/\{x\}/\{y\}\.mvt"\s*\]""",
     )

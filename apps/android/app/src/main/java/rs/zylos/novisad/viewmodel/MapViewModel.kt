@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import rs.zylos.novisad.data.api.BuildingDetailResponse
+import rs.zylos.novisad.data.api.LonLat
 import rs.zylos.novisad.data.api.OrgDetailResponse
 import rs.zylos.novisad.data.api.SearchHit
 import rs.zylos.novisad.data.api.SearchKind
@@ -23,13 +24,19 @@ import rs.zylos.novisad.data.repository.BuildingRepository
 import rs.zylos.novisad.data.repository.HttpBuildingRepository
 import rs.zylos.novisad.data.repository.HttpOrgRepository
 import rs.zylos.novisad.data.repository.HttpSearchRepository
+import rs.zylos.novisad.data.repository.OrgBboxResult
 import rs.zylos.novisad.data.repository.OrgDetailResult
 import rs.zylos.novisad.data.repository.OrgRepository
 import rs.zylos.novisad.data.repository.SearchRepository
 import rs.zylos.novisad.data.repository.SearchResult
 import rs.zylos.novisad.map.BuildingHighlight
+import rs.zylos.novisad.map.MapBbox
 import rs.zylos.novisad.map.MapDefaults
+import rs.zylos.novisad.map.OrgPinLimits
+import rs.zylos.novisad.map.OrgPinLogic
+import rs.zylos.novisad.map.OrgPins
 import rs.zylos.novisad.map.SearchMarker
+import rs.zylos.novisad.map.SearchPins
 
 class MapViewModel(
     private val buildings: BuildingRepository,
@@ -42,11 +49,14 @@ class MapViewModel(
 
     private var pickJob: Job? = null
     private var searchJob: Job? = null
+    private var orgPinsJob: Job? = null
     private var generation = 0
     private var searchGeneration = 0
+    private var orgPinsGeneration = 0
     private var cameraLat = MapDefaults.LAT
     private var cameraLon = MapDefaults.LON
     private var cameraZoom = MapDefaults.ZOOM
+    private var cameraBbox: MapBbox? = null
 
     init {
         viewModelScope.launch {
@@ -55,10 +65,22 @@ class MapViewModel(
         }
     }
 
-    fun onCameraIdle(lat: Double, lon: Double, zoom: Double) {
+    fun onCameraIdle(
+        lat: Double,
+        lon: Double,
+        zoom: Double,
+        minLon: Double? = null,
+        minLat: Double? = null,
+        maxLon: Double? = null,
+        maxLat: Double? = null,
+    ) {
         cameraLat = lat
         cameraLon = lon
         cameraZoom = zoom
+        if (minLon != null && minLat != null && maxLon != null && maxLat != null) {
+            cameraBbox = MapBbox(minLon, minLat, maxLon, maxLat)
+        }
+        scheduleOrgPins()
     }
 
     fun onSearchFocusChanged(focused: Boolean) {
@@ -75,10 +97,21 @@ class MapViewModel(
         )
         if (!SearchLogic.shouldRequest(text)) {
             searchGeneration += 1
+            val leavingMulti = _state.value.pinMode == MapPinMode.SearchMulti
             _state.value = _state.value.copy(
                 hits = emptyList(),
                 searchLoading = false,
+                pinMode = if (leavingMulti) MapPinMode.Browse else _state.value.pinMode,
+                searchPinsJson = if (leavingMulti) null else _state.value.searchPinsJson,
+                mode = if (leavingMulti && _state.value.mode == SheetMode.SearchList) {
+                    SheetMode.Idle
+                } else {
+                    _state.value.mode
+                },
             )
+            if (leavingMulti) {
+                scheduleOrgPins()
+            }
             return
         }
         searchJob = viewModelScope.launch {
@@ -89,11 +122,23 @@ class MapViewModel(
                 is SearchResult.Ok -> {
                     if (request != searchGeneration) return@launch
                     val empty = result.body.hits.isEmpty()
+                    val eligible = SearchLogic.isMultiEligible(result.body.hits)
                     _state.value = _state.value.copy(
                         hits = result.body.hits,
                         searchLoading = false,
                         searchError = if (empty) SearchUiError.Empty else null,
                     )
+                    if (eligible && _state.value.pinMode != MapPinMode.SearchSingle) {
+                        enterSearchMulti(result.body.hits)
+                    } else if (!eligible && _state.value.pinMode == MapPinMode.SearchMulti) {
+                        _state.value = _state.value.copy(
+                            pinMode = MapPinMode.Browse,
+                            searchPinsJson = null,
+                            mode = if (_state.value.mode == SheetMode.SearchList) SheetMode.Idle else _state.value.mode,
+                            bounds = null,
+                        )
+                        scheduleOrgPins()
+                    }
                 }
                 is SearchResult.Unavailable -> {
                     if (request != searchGeneration) return@launch
@@ -117,6 +162,7 @@ class MapViewModel(
 
     fun onClearSearch() {
         searchJob?.cancel()
+        orgPinsJob?.cancel()
         searchGeneration += 1
         generation += 1
         pickJob?.cancel()
@@ -128,9 +174,11 @@ class MapViewModel(
                 searchError = null,
                 searchFocused = true,
                 camera = null,
+                bounds = null,
                 generation = generation,
             ),
         ).copy(searchFocused = true)
+        scheduleOrgPins()
     }
 
     fun onSelectHit(hit: SearchHit) {
@@ -147,7 +195,9 @@ class MapViewModel(
                 searchLoading = false,
                 searchError = null,
                 selectedHit = hit,
+                pinMode = MapPinMode.SearchSingle,
                 markerJson = SearchMarker.pointJson(hit.lon, hit.lat),
+                searchPinsJson = null,
                 camera = CameraTarget(
                     lat = hit.lat,
                     lon = hit.lon,
@@ -156,6 +206,7 @@ class MapViewModel(
                     nonce = request,
                     anchorYFromBottom = MapDefaults.SEARCH_FLYTO_ANCHOR_Y,
                 ),
+                bounds = null,
                 mode = SheetMode.Loading,
                 message = null,
                 haptic = false,
@@ -196,6 +247,29 @@ class MapViewModel(
         }
     }
 
+    fun onSearchPinClick(id: String?) {
+        if (id.isNullOrBlank() || _state.value.dropdownOpen) {
+            return
+        }
+        val hit = _state.value.hits.firstOrNull { it.id == id } ?: return
+        onSelectHit(hit)
+    }
+
+    fun onShowAllOnMap() {
+        val hits = _state.value.hits
+        if (hits.isEmpty()) {
+            return
+        }
+        enterSearchMulti(hits)
+    }
+
+    fun onOrgPinClick(id: String?) {
+        if (id.isNullOrBlank() || _state.value.dropdownOpen) {
+            return
+        }
+        onOrgSelected(id)
+    }
+
     fun onMapClick(lon: Double, lat: Double) {
         if (_state.value.dropdownOpen) {
             _state.value = _state.value.copy(searchFocused = false)
@@ -206,11 +280,14 @@ class MapViewModel(
         pickJob = viewModelScope.launch {
             _state.value = _state.value.copy(
                 mode = SheetMode.Loading,
+                pinMode = MapPinMode.Browse,
                 org = null,
                 peek = null,
                 markerJson = null,
+                searchPinsJson = null,
                 selectedHit = null,
                 searchFocused = false,
+                bounds = null,
                 message = null,
                 haptic = false,
                 generation = request,
@@ -297,6 +374,7 @@ class MapViewModel(
         generation += 1
         pickJob?.cancel()
         _state.value = SheetLogic.reduceClose(_state.value.copy(generation = generation))
+        scheduleOrgPins()
     }
 
     fun consumeMessage() {
@@ -311,10 +389,81 @@ class MapViewModel(
         }
     }
 
+    fun consumeBounds() {
+        if (_state.value.bounds != null) {
+            _state.value = _state.value.copy(bounds = null)
+        }
+    }
+
     override fun onCleared() {
         pickJob?.cancel()
         searchJob?.cancel()
+        orgPinsJob?.cancel()
         super.onCleared()
+    }
+
+    private fun enterSearchMulti(hits: List<SearchHit>) {
+        val pins = SearchLogic.multiPins(hits)
+        if (pins.isEmpty()) {
+            return
+        }
+        val request = ++generation
+        _state.value = _state.value.copy(
+            pinMode = MapPinMode.SearchMulti,
+            searchFocused = false,
+            searchLoading = false,
+            selectedHit = null,
+            markerJson = null,
+            searchPinsJson = SearchPins.collectionJson(pins),
+            mode = SheetMode.SearchList,
+            peek = null,
+            org = null,
+            building = null,
+            highlightJson = null,
+            camera = null,
+            bounds = BoundsTarget(
+                points = pins.map { LonLat(it.lon, it.lat) },
+                durationMs = MapDefaults.FLY_DURATION_MS,
+                nonce = request,
+            ),
+            generation = request,
+        )
+    }
+
+    private fun scheduleOrgPins() {
+        orgPinsJob?.cancel()
+        if (_state.value.pinMode != MapPinMode.Browse) {
+            return
+        }
+        if (!OrgPinLimits.shouldRequest(cameraZoom)) {
+            orgPinsGeneration += 1
+            _state.value = _state.value.copy(orgPinsJson = OrgPins.emptyCollectionJson())
+            return
+        }
+        val bbox = cameraBbox ?: return
+        val zoom = cameraZoom
+        orgPinsJob = viewModelScope.launch {
+            delay(OrgPinLimits.debounceMs(zoom))
+            if (_state.value.pinMode != MapPinMode.Browse) return@launch
+            val latest = cameraBbox ?: bbox
+            if (!OrgPinLimits.shouldRequest(cameraZoom)) {
+                _state.value = _state.value.copy(orgPinsJson = OrgPins.emptyCollectionJson())
+                return@launch
+            }
+            val request = ++orgPinsGeneration
+            val limit = OrgPinLimits.limit(cameraZoom)
+            when (val result = orgs.inBbox(latest.minLon, latest.minLat, latest.maxLon, latest.maxLat, limit)) {
+                is OrgBboxResult.Ok -> {
+                    if (request != orgPinsGeneration) return@launch
+                    if (_state.value.pinMode != MapPinMode.Browse) return@launch
+                    val visible = OrgPinLogic.visiblePins(result.pins, cameraZoom, latest)
+                    _state.value = _state.value.copy(orgPinsJson = OrgPins.collectionJson(visible))
+                }
+                is OrgBboxResult.Network -> {
+                    if (request != orgPinsGeneration) return@launch
+                }
+            }
+        }
     }
 
     private suspend fun openHit(hit: SearchHit, request: Int) {

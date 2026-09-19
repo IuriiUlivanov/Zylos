@@ -33,4 +33,7 @@
     <string name="org_field_website">Sajt</string>
     <string name="zatvori_cd">Zatvori</string>
     <string name="sheet_cd">Kartica zgrade</string>
+    <string name="prikazi_sve_na_karti">Prikaži sve na karti</string>
+    <string name="rezultati_pretrage">Rezultati pretrage</string>
+    <string name="rezultati_count">%1$d rezultata</string>
 </resources>

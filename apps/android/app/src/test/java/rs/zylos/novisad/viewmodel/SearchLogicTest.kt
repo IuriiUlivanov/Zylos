@@ -30,6 +30,7 @@ import rs.zylos.novisad.data.local.SearchHistoryStore
 import rs.zylos.novisad.data.repository.BuildingAtResult
 import rs.zylos.novisad.data.repository.BuildingDetailResult
 import rs.zylos.novisad.data.repository.BuildingRepository
+import rs.zylos.novisad.data.repository.OrgBboxResult
 import rs.zylos.novisad.data.repository.OrgDetailResult
 import rs.zylos.novisad.data.repository.OrgRepository
 import rs.zylos.novisad.data.repository.SearchRepository
@@ -297,6 +298,13 @@ class SearchLogicTest {
         private val byIdFn: suspend (String) -> OrgDetailResult = { OrgDetailResult.Network },
     ) : OrgRepository {
         override suspend fun byId(id: String) = byIdFn(id)
+        override suspend fun inBbox(
+            minLon: Double,
+            minLat: Double,
+            maxLon: Double,
+            maxLat: Double,
+            limit: Int,
+        ) = OrgBboxResult.Ok(emptyList())
     }
 }
 

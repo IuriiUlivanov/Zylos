@@ -17,6 +17,12 @@ interface ZylosApi {
         @Path("id") id: String,
     ): Response<BuildingDetailResponse>
 
+    @GET("v1/orgs")
+    suspend fun orgs(
+        @Query("bbox") bbox: String,
+        @Query("limit") limit: Int,
+    ): Response<@JvmSuppressWildcards List<OrgPin>>
+
     @GET("v1/orgs/{id}")
     suspend fun org(
         @Path("id") id: String,

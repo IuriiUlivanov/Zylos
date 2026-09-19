@@ -37,4 +37,33 @@ class MapStyleFactoryTest {
             MapStyleFactory.mbtilesUri("/data/user/0/rs.zylos.novisad/files/maps/novi-sad.mbtiles"),
         )
     }
+
+    @Test
+    fun mobileStyleKeepsPoiRankAndClassFilters() {
+        val style = loadMobileStyle()
+        assertTrue(style.contains("\"id\": \"poi-dot\""))
+        assertTrue(style.contains("\"id\": \"poi-label\""))
+        assertTrue(style.contains("""["<=", ["coalesce", ["get", "rank"], 99], 25]"""))
+        assertTrue(style.contains("""["<=", ["coalesce", ["get", "rank"], 99], 8]"""))
+        assertTrue(style.contains("\"hospital\""))
+        assertTrue(style.contains("\"pharmacy\""))
+        assertEquals(
+            listOf("poi-dot", "poi-dot-16", "poi-dot-17", "poi-dot-18", "poi-dot-19"),
+            MapStyleFactory.POI_DOT_LAYER_IDS,
+        )
+        val patched = MapStyleFactory.patch(style, "mbtiles:///data/novi-sad.mbtiles")
+        assertTrue(patched.contains("""["<=", ["coalesce", ["get", "rank"], 99], 25]"""))
+        assertTrue(patched.contains("fill-extrusion"))
+    }
+
+    private fun loadMobileStyle(): String {
+        val candidates = listOf(
+            java.io.File("../../../infra/preview/style-mobile.json"),
+            java.io.File("../../infra/preview/style-mobile.json"),
+            java.io.File("infra/preview/style-mobile.json"),
+        )
+        val file = candidates.firstOrNull { it.isFile }
+            ?: error("style-mobile.json not found from ${candidates.map { it.absolutePath }}")
+        return file.readText()
+    }
 }

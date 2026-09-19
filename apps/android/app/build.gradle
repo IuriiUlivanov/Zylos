@@ -13,7 +13,7 @@ def apiUrl = providers.gradleProperty("zylos.apiUrl")
         .get()
 
 def prepareMapAssets = tasks.register("prepareMapAssets", Copy) {
-    def style = new File(repoRoot, "infra/preview/style.json")
+    def style = new File(repoRoot, "infra/preview/style-mobile.json")
     def water = new File(repoRoot, "infra/preview/water-fill.geojson")
     def mbtiles = new File(repoRoot, "data/tiles/novi-sad.mbtiles")
     from(style)

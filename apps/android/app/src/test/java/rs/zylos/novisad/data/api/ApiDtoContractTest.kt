@@ -1,5 +1,6 @@
 package rs.zylos.novisad.data.api
 
+import com.squareup.moshi.Types
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -190,5 +191,24 @@ class ApiDtoContractTest {
     fun apiClientNormalizesBaseUrl() {
         assertEquals("http://10.0.2.2:3000/", ApiClient.normalizeBaseUrl("http://10.0.2.2:3000"))
         assertEquals("http://10.0.2.2:3000/", ApiClient.normalizeBaseUrl("http://10.0.2.2:3000/"))
+    }
+
+    @Test
+    fun moshiParsesOrgPinBboxArray() {
+        val json = """
+            [
+              {"id":"org:osm:n1","name":"Apoteka Benu","category_slug":"pharmacy","lon":19.845,"lat":45.255},
+              {"id":"org:osm:n2","name":"Kafić","category_slug":"cafe","lon":19.84,"lat":45.25}
+            ]
+        """.trimIndent()
+        val type = Types.newParameterizedType(List::class.java, OrgPin::class.java)
+        val pins = ApiJson.moshi.adapter<List<OrgPin>>(type).fromJson(json)!!
+        assertEquals(2, pins.size)
+        assertEquals("org:osm:n1", pins[0].id)
+        assertEquals("Apoteka Benu", pins[0].name)
+        assertEquals("pharmacy", pins[0].category_slug)
+        assertEquals(19.845, pins[0].lon, 0.0)
+        assertEquals(45.255, pins[0].lat, 0.0)
+        assertEquals("cafe", pins[1].category_slug)
     }
 }

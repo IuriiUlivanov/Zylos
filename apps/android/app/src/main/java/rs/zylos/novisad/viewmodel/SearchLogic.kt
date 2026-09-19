@@ -57,4 +57,20 @@ object SearchLogic {
         }
         return (mapHeightPx * (2.0 * anchorYFromBottom - 1.0)).roundToInt().coerceAtLeast(0)
     }
+
+    fun isMultiEligible(hits: List<SearchHit>): Boolean {
+        if (hits.size < MapDefaults.SEARCH_MULTI_MIN_HITS) {
+            return false
+        }
+        val orgs = hits.filter { it.kind == SearchKind.organization }
+        if (orgs.size < MapDefaults.SEARCH_MULTI_MIN_HITS) {
+            return false
+        }
+        val slugs = orgs.mapNotNull { it.category_slug?.trim()?.takeIf { slug -> slug.isNotEmpty() } }.distinct()
+        return slugs.size == 1
+    }
+
+    fun multiPins(hits: List<SearchHit>): List<SearchHit> {
+        return hits.take(MapDefaults.SEARCH_MULTI_MAX_PINS)
+    }
 }

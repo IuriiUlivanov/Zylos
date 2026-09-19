@@ -1,6 +1,7 @@
 package rs.zylos.novisad.viewmodel
 
 import rs.zylos.novisad.data.api.BuildingDetailResponse
+import rs.zylos.novisad.data.api.LonLat
 import rs.zylos.novisad.data.api.OrgDetailResponse
 import rs.zylos.novisad.data.api.SearchHit
 import rs.zylos.novisad.data.local.SearchHistoryEntity
@@ -13,6 +14,13 @@ enum class SheetMode {
     Building,
     Organization,
     Peek,
+    SearchList,
+}
+
+enum class MapPinMode {
+    Browse,
+    SearchSingle,
+    SearchMulti,
 }
 
 enum class UserMessage {
@@ -42,14 +50,24 @@ data class CameraTarget(
     val anchorYFromBottom: Float = MapDefaults.SEARCH_FLYTO_ANCHOR_Y,
 )
 
+data class BoundsTarget(
+    val points: List<LonLat>,
+    val durationMs: Int,
+    val nonce: Int,
+)
+
 data class MapUiState(
     val mode: SheetMode = SheetMode.Idle,
+    val pinMode: MapPinMode = MapPinMode.Browse,
     val building: BuildingDetailResponse? = null,
     val org: OrgDetailResponse? = null,
     val peek: PeekInfo? = null,
     val highlightJson: String? = null,
     val markerJson: String? = null,
+    val orgPinsJson: String? = null,
+    val searchPinsJson: String? = null,
     val camera: CameraTarget? = null,
+    val bounds: BoundsTarget? = null,
     val query: String = "",
     val hits: List<SearchHit> = emptyList(),
     val history: List<SearchHistoryEntity> = emptyList(),
@@ -87,12 +105,15 @@ object SheetLogic {
     fun reduceClose(state: MapUiState): MapUiState {
         return state.copy(
             mode = SheetMode.Idle,
+            pinMode = MapPinMode.Browse,
             building = null,
             org = null,
             peek = null,
             highlightJson = null,
             markerJson = null,
+            searchPinsJson = null,
             selectedHit = null,
+            bounds = null,
             message = null,
             haptic = false,
         )

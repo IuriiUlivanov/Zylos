@@ -24,6 +24,14 @@ class MapDefaultsTest {
         assertEquals(16.0, MapDefaults.FLY_MIN_ZOOM, 0.0)
         assertEquals(0.75f, MapDefaults.SEARCH_FLYTO_ANCHOR_Y, 0.0f)
         assertEquals(10, MapDefaults.SEARCH_HISTORY_LIMIT)
+        assertEquals(300L, MapDefaults.ORG_PINS_DEBOUNCE_MS)
+        assertEquals(250L, MapDefaults.ORG_PINS_DEBOUNCE_MS_Z18)
+        assertEquals(200L, MapDefaults.ORG_PINS_DEBOUNCE_MS_Z19)
+        assertEquals(15, MapDefaults.ORG_PINS_MIN_ZOOM)
+        assertEquals(200, MapDefaults.ORG_PINS_LIMIT_MAX)
+        assertEquals(15, MapDefaults.SEARCH_MULTI_MAX_PINS)
+        assertEquals(3, MapDefaults.SEARCH_MULTI_MIN_HITS)
+        assertEquals("style-mobile.json", MapDefaults.STYLE_ASSET)
     }
 
     @Test
