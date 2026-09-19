@@ -1,6 +1,6 @@
 # Zylos Android
 
-Нативный клиент. Текущий этап: [STAGE-12-android-search.md](../../Docs/STAGE-12-android-search.md) (здание — [STAGE-11-android-building.md](../../Docs/STAGE-11-android-building.md), карта — [STAGE-10-android.md](../../Docs/STAGE-10-android.md)). UI/UX — [MOBILE-DESIGN.md](../../Docs/design/MOBILE-DESIGN.md) (ориентир 2GIS). Веб не развиваем. API — существующий Fastify `/v1`.
+Нативный клиент. Текущий этап: [STAGE-13-android-poi.md](../../Docs/STAGE-13-android-poi.md) (поиск — [STAGE-12-android-search.md](../../Docs/STAGE-12-android-search.md), здание — [STAGE-11-android-building.md](../../Docs/STAGE-11-android-building.md), карта — [STAGE-10-android.md](../../Docs/STAGE-10-android.md)). UI/UX — [MOBILE-DESIGN.md](../../Docs/design/MOBILE-DESIGN.md) (ориентир 2GIS). Веб не развиваем. API — существующий Fastify `/v1`.
 
 ## Сборка
 
@@ -50,5 +50,14 @@ docker compose up -d postgis meilisearch api
 ```
 
 Org-пины по zoom — [STAGE-13-android-poi.md](../../Docs/STAGE-13-android-poi.md), [MOBILE-POI-ZOOM.md](../../Docs/design/MOBILE-POI-ZOOM.md).
+
+## Org-пины и Search Multi (STAGE-13)
+
+Browse z15+: `GET /v1/orgs?bbox=` (debounce 300/250/200 ms, limit 40…200). Слой `org-pins` поверх MBTiles. Mobile Style JSON — `infra/preview/style-mobile.json` (`poi-dot` / `poi-label` по rank). Категорийный поиск (≥3 org одной категории) или кнопка **Prikaži sve na karti** → Search Multi (≤15 пинов, `fitBounds`, browse скрыты).
+
+```powershell
+docker compose up -d postgis meilisearch api
+..\..\scripts\stage13-verify.ps1
+```
 
 Центр камеры: 19.845, 45.255; zoom 14; pitch ≤ 60°. Атрибуция OSM на карте.
