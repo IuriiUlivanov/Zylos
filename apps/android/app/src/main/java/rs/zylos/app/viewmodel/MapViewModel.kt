@@ -91,7 +91,15 @@ class MapViewModel(
     }
 
     fun onSearchFocusChanged(focused: Boolean) {
+        if (focused) {
+            dismissObjectSelectionIfActive()
+        }
         searchFeature.setFocused(focused)
+        publish()
+    }
+
+    fun onBottomDockClick() {
+        dismissObjectSelectionIfActive()
         publish()
     }
 
@@ -210,19 +218,24 @@ class MapViewModel(
     }
 
     fun onSelectTab(tab: BottomTab) {
-        if (routeFeature.state.value.bottomTab == tab) {
-            return
-        }
-        if (tab == BottomTab.Search) {
-            routeFeature.showSearchTab()
-            if (routeFeature.state.value.mode == MapRouteMode.Idle) {
-                pinsFeature.schedule()
-            }
+        val sameTab = routeFeature.state.value.bottomTab == tab
+        if (sameTab) {
+            dismissObjectSelectionIfActive()
             publish()
             return
         }
-        routeFeature.enter(selectedDestination())
-        dismissObjectSelection()
+        if (tab == BottomTab.Route) {
+            val destination = selectedDestination()
+            dismissObjectSelectionIfActive()
+            routeFeature.enter(destination)
+            publish()
+            return
+        }
+        dismissObjectSelectionIfActive()
+        routeFeature.showSearchTab()
+        if (routeFeature.state.value.mode == MapRouteMode.Idle) {
+            pinsFeature.schedule()
+        }
         publish()
     }
 
@@ -251,6 +264,9 @@ class MapViewModel(
     }
 
     fun onRouteFieldFocus(field: RouteField?) {
+        if (field != null) {
+            dismissObjectSelectionIfActive()
+        }
         routeFeature.onFieldFocus(field)
         publish()
     }
@@ -386,6 +402,16 @@ class MapViewModel(
         message = null
         haptic = false
         pinsFeature.schedule()
+    }
+
+    private fun dismissObjectSelectionIfActive() {
+        if (_state.value.sheet.mode == SheetMode.Idle &&
+            _state.value.overlay.highlight == null &&
+            _state.value.overlay.marker == null
+        ) {
+            return
+        }
+        dismissObjectSelection()
     }
 
     private fun dismissObjectSelection() {

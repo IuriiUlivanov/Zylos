@@ -15,6 +15,7 @@ class TabBarBinder(
     private val requestMyLocation: () -> Unit,
 ) {
     fun bind() {
+        binding.tabBar.setOnClickListener { viewModel.onBottomDockClick() }
         binding.tabSearch.setOnClickListener { viewModel.onSelectTab(BottomTab.Search) }
         binding.tabRoute.setOnClickListener {
             viewModel.onSelectTab(BottomTab.Route)
@@ -22,7 +23,10 @@ class TabBarBinder(
                 requestMyLocation()
             }
         }
-        binding.tabBuildCta.setOnClickListener { viewModel.onBuildCta() }
+        binding.tabBuildCta.setOnClickListener {
+            viewModel.onBottomDockClick()
+            viewModel.onBuildCta()
+        }
     }
 
     fun render(state: MapUiState) {

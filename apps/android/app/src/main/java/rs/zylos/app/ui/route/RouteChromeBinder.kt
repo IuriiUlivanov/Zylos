@@ -33,12 +33,15 @@ class RouteChromeBinder(
     private val routeAdapter = RouteSheetAdapter()
 
     fun bind() {
-        binding.routeClose.setOnClickListener { viewModel.onClearRoute() }
-        binding.routeChrome.routeSwap.setOnClickListener { viewModel.onSwapRoute() }
-        binding.routeChrome.routeFromMap.setOnClickListener { viewModel.onNaKartu(RouteField.From) }
-        binding.routeChrome.routeToMap.setOnClickListener { viewModel.onNaKartu(RouteField.To) }
-        binding.routeChrome.routeMyLocation.setOnClickListener { requestMyLocation() }
-        binding.routeHandle.setOnClickListener { cycleRouteSheetStep() }
+        binding.routeChrome.root.setOnClickListener { viewModel.onBottomDockClick() }
+        binding.routeClose.setOnClickListener { dockClick { viewModel.onClearRoute() } }
+        binding.routeChrome.routeSwap.setOnClickListener { dockClick { viewModel.onSwapRoute() } }
+        binding.routeChrome.routeFromMap.setOnClickListener { dockClick { viewModel.onNaKartu(RouteField.From) } }
+        binding.routeChrome.routeToMap.setOnClickListener { dockClick { viewModel.onNaKartu(RouteField.To) } }
+        binding.routeChrome.routeMyLocation.setOnClickListener { dockClick { requestMyLocation() } }
+        binding.routeChrome.routeModeWalk.setOnClickListener { viewModel.onBottomDockClick() }
+        binding.routeChrome.routeModeTransit.setOnClickListener { viewModel.onBottomDockClick() }
+        binding.routeHandle.setOnClickListener { dockClick { cycleRouteSheetStep() } }
         binding.routePager.adapter = routeAdapter
         binding.routePager.registerOnPageChangeCallback(
             object : androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
@@ -140,7 +143,15 @@ class RouteChromeBinder(
         applyRouteResultsHeight()
     }
 
+    private fun dockClick(action: () -> Unit) {
+        viewModel.onBottomDockClick()
+        action()
+    }
+
     private fun bindRouteField(input: EditText, field: RouteField) {
+        input.setOnClickListener {
+            viewModel.onRouteFieldFocus(field)
+        }
         input.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit

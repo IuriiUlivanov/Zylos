@@ -42,7 +42,10 @@ class SearchDockBinder(
     fun bind() {
         binding.searchDropdown.layoutManager = LinearLayoutManager(binding.root.context)
         binding.searchDropdown.adapter = searchAdapter
+        binding.searchChrome.setOnClickListener { viewModel.onBottomDockClick() }
+        binding.searchInput.setOnClickListener { viewModel.onBottomDockClick() }
         binding.searchClear.setOnClickListener {
+            viewModel.onBottomDockClick()
             viewModel.onClearSearch()
             binding.searchInput.requestFocus()
         }

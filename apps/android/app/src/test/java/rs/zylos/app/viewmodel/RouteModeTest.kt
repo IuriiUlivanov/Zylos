@@ -189,6 +189,73 @@ class RouteModeTest {
     }
 
     @Test
+    fun searchFocusClearsBuildingSelection() = runTest(dispatcher) {
+        val buildings = FakeBuildings(
+            atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
+            byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
+        )
+        val vm = MapViewModel(buildings, FakeOrgs())
+        vm.onMapClick(19.84, 45.25)
+        advanceUntilIdle()
+        assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
+
+        vm.onSearchFocusChanged(true)
+        assertEquals(SheetMode.Idle, vm.state.value.sheet.mode)
+        assertNull(vm.state.value.overlay.highlight)
+    }
+
+    @Test
+    fun bottomDockClickClearsBuildingSelectionInSearchTab() = runTest(dispatcher) {
+        val buildings = FakeBuildings(
+            atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
+            byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
+        )
+        val vm = MapViewModel(buildings, FakeOrgs())
+        vm.onMapClick(19.84, 45.25)
+        advanceUntilIdle()
+        assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
+
+        vm.onBottomDockClick()
+        assertEquals(SheetMode.Idle, vm.state.value.sheet.mode)
+        assertNull(vm.state.value.overlay.highlight)
+    }
+
+    @Test
+    fun repeatTabClickClearsBuildingSelection() = runTest(dispatcher) {
+        val buildings = FakeBuildings(
+            atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
+            byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
+        )
+        val vm = MapViewModel(buildings, FakeOrgs())
+        vm.onMapClick(19.84, 45.25)
+        advanceUntilIdle()
+        assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
+
+        vm.onSelectTab(BottomTab.Search)
+        assertEquals(SheetMode.Idle, vm.state.value.sheet.mode)
+        assertNull(vm.state.value.overlay.highlight)
+    }
+
+    @Test
+    fun routeFieldFocusClearsBuildingSelection() = runTest(dispatcher) {
+        val buildings = FakeBuildings(
+            atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
+            byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
+        )
+        val vm = MapViewModel(buildings, FakeOrgs())
+        vm.onSelectTab(BottomTab.Route)
+        vm.onMapClick(19.84, 45.25)
+        advanceUntilIdle()
+        assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
+        assertNotNull(vm.state.value.overlay.highlight)
+
+        vm.onRouteFieldFocus(RouteField.To)
+        assertEquals(SheetMode.Idle, vm.state.value.sheet.mode)
+        assertNull(vm.state.value.sheet.building)
+        assertNull(vm.state.value.overlay.highlight)
+    }
+
+    @Test
     fun enteringRouteClearsBuildingSelectionAndFillsTo() = runTest(dispatcher) {
         val buildings = FakeBuildings(
             atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
