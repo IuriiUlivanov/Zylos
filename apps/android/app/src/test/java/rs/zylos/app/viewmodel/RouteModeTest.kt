@@ -14,6 +14,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import rs.zylos.app.data.api.BuildingAddress
+import rs.zylos.app.data.api.BuildingAtResponse
+import rs.zylos.app.data.api.BuildingDetailResponse
+import rs.zylos.app.data.api.BuildingGeometry
+import rs.zylos.app.data.api.BuildingOrgListItem
 import rs.zylos.app.data.api.LonLat
 import rs.zylos.app.data.api.RouteItinerary
 import rs.zylos.app.data.api.RouteLeg
@@ -21,6 +26,8 @@ import rs.zylos.app.data.api.RouteLineString
 import rs.zylos.app.data.api.RouteResponse
 import rs.zylos.app.data.api.SearchHit
 import rs.zylos.app.data.api.SearchKind
+import rs.zylos.app.data.repository.BuildingAtResult
+import rs.zylos.app.data.repository.BuildingDetailResult
 import rs.zylos.app.data.repository.RouteResult
 import rs.zylos.app.testing.FakeBuildings
 import rs.zylos.app.testing.FakeOrgs
@@ -115,6 +122,7 @@ class RouteModeTest {
     @Test
     fun mapPickUsesPickFieldAfterFocusLost() = runTest(dispatcher) {
         val vm = MapViewModel(FakeBuildings(), FakeOrgs())
+        vm.onSelectTab(BottomTab.Route)
         vm.onRouteFieldFocus(RouteField.From)
         vm.onNaKartu(RouteField.From)
         vm.onRouteFieldFocus(RouteField.To)
@@ -140,6 +148,69 @@ class RouteModeTest {
         assertTrue(vm.state.value.route.itineraries.isEmpty())
         assertNull(vm.state.value.route.activeItinerary)
     }
+
+    @Test
+    fun searchTabRestoresBuildingPickAfterRoute() = runTest(dispatcher) {
+        val buildings = FakeBuildings(
+            atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
+            byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
+        )
+        val vm = MapViewModel(buildings, FakeOrgs())
+        vm.onSelectTab(BottomTab.Route)
+        assertEquals(MapRouteMode.Planning, vm.state.value.route.mode)
+        vm.onMapClick(19.84, 45.25)
+        advanceUntilIdle()
+        assertEquals(SheetMode.Idle, vm.state.value.sheet.mode)
+        assertEquals(0, buildings.atCalls)
+
+        vm.onSelectTab(BottomTab.Search)
+        assertEquals(MapRouteMode.Idle, vm.state.value.route.mode)
+        assertEquals(BottomTab.Search, vm.state.value.route.bottomTab)
+        vm.onMapClick(19.84, 45.25)
+        advanceUntilIdle()
+        assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
+        assertEquals("b1", vm.state.value.sheet.building?.id)
+    }
+
+    @Test
+    fun searchTabAllowsBuildingPickWhileRouteResultStays() = runTest(dispatcher) {
+        val buildings = FakeBuildings(
+            atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
+            byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
+        )
+        val vm = MapViewModel(
+            buildings,
+            FakeOrgs(),
+            routes = FakeRoutes { _, _ -> RouteResult.Ok(sampleResponse("x")) },
+        )
+        vm.onMapPicked(RouteField.From, 19.845, 45.255, "A")
+        vm.onMapPicked(RouteField.To, 19.840, 45.238, "B")
+        vm.onBuildRoute()
+        advanceUntilIdle()
+        vm.onSelectTab(BottomTab.Search)
+        assertEquals(MapRouteMode.Result, vm.state.value.route.mode)
+        vm.onMapClick(19.84, 45.25)
+        advanceUntilIdle()
+        assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
+        assertEquals("b1", vm.state.value.sheet.building?.id)
+    }
+
+    private fun sampleBuilding(id: String) = BuildingDetailResponse(
+        id = id,
+        name = null,
+        centroid = LonLat(19.84, 45.25),
+        geometry = BuildingGeometry(
+            type = "Polygon",
+            coordinates = null,
+            encodedJson = """{"type":"Polygon","coordinates":[[[19.84,45.25],[19.85,45.25],[19.85,45.26],[19.84,45.26],[19.84,45.25]]]}""",
+        ),
+        addresses = listOf(
+            BuildingAddress("a1", "Bulevar 12", "Bulevar", "12", "rgz"),
+        ),
+        organizations = listOf(
+            BuildingOrgListItem("org:osm:n1", "A", "cafe", "Kafić", null),
+        ),
+    )
 
     private fun sampleResponse(tag: String) = RouteResponse(
         mode = "transit",

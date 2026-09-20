@@ -65,20 +65,27 @@ class RouteCoordinator(
     }
 
     fun showSearchTab() {
+        val previous = _state.value.mode
+        val nextMode = if (previous == MapRouteMode.Result) MapRouteMode.Result else MapRouteMode.Idle
         _state.value = _state.value.copy(
             bottomTab = BottomTab.Search,
+            mode = nextMode,
             pickField = null,
             fieldFocus = null,
             searchField = null,
             hits = emptyList(),
         )
+        if (previous != nextMode) {
+            events.emit(MapEvent.RouteModeChanged(nextMode))
+        }
     }
 
     fun enter(destination: RoutePoint?) {
         val from = _state.value.from
+        val nextMode = if (_state.value.mode == MapRouteMode.Result) MapRouteMode.Result else MapRouteMode.Planning
         _state.value = _state.value.copy(
             bottomTab = BottomTab.Route,
-            mode = if (_state.value.mode == MapRouteMode.Result) MapRouteMode.Result else MapRouteMode.Planning,
+            mode = nextMode,
             to = _state.value.to ?: destination,
             toQuery = (_state.value.to ?: destination)?.label ?: _state.value.toQuery,
             from = from,
@@ -88,6 +95,7 @@ class RouteCoordinator(
             hits = emptyList(),
         )
         events.emit(MapEvent.BlurSearch)
+        events.emit(MapEvent.RouteModeChanged(nextMode))
     }
 
     fun onBuildRoute() {
@@ -243,7 +251,7 @@ class RouteCoordinator(
     }
 
     fun onMapLongClick(lon: Double, lat: Double) {
-        if (_state.value.bottomTab != BottomTab.Route && _state.value.mode == MapRouteMode.Idle) {
+        if (_state.value.bottomTab != BottomTab.Route) {
             return
         }
         onMapPicked(activeFieldForMap(), lon, lat)
@@ -256,6 +264,9 @@ class RouteCoordinator(
     }
 
     fun handleMapTap(lon: Double, lat: Double): Boolean {
+        if (_state.value.bottomTab != BottomTab.Route) {
+            return false
+        }
         val pick = _state.value.pickField ?: return false
         onMapPicked(pick, lon, lat)
         return true

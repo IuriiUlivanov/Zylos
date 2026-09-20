@@ -166,9 +166,7 @@ class MapViewModel(
             publish()
             return
         }
-        if (routeFeature.state.value.mode == MapRouteMode.Result ||
-            routeFeature.state.value.mode == MapRouteMode.Planning
-        ) {
+        if (routeFeature.state.value.bottomTab == BottomTab.Route) {
             return
         }
         searchFeature.clearSelected()

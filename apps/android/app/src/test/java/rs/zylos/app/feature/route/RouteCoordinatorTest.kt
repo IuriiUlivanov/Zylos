@@ -6,6 +6,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -103,6 +104,7 @@ class RouteCoordinatorTest {
     @Test
     fun mapPickUsesPickFieldAfterFocusLost() = runTest {
         val route = coordinator(FakeRoutes())
+        route.enter(null)
         route.onFieldFocus(RouteField.From)
         route.onNaKartu(RouteField.From)
         route.onFieldFocus(RouteField.To)
@@ -123,6 +125,33 @@ class RouteCoordinatorTest {
         assertEquals(BottomTab.Search, route.state.value.bottomTab)
         assertTrue(route.state.value.itineraries.isEmpty())
         assertNull(route.state.value.activeItinerary)
+    }
+
+    @Test
+    fun searchTabLeavesPlanningAndIgnoresMapPick() = runTest {
+        val route = coordinator(FakeRoutes())
+        route.enter(null)
+        assertEquals(MapRouteMode.Planning, route.state.value.mode)
+        route.onNaKartu(RouteField.To)
+        route.showSearchTab()
+        assertEquals(BottomTab.Search, route.state.value.bottomTab)
+        assertEquals(MapRouteMode.Idle, route.state.value.mode)
+        assertNull(route.state.value.pickField)
+        assertFalse(route.handleMapTap(19.845, 45.255))
+        assertNull(route.state.value.to)
+    }
+
+    @Test
+    fun searchTabKeepsResultMode() = runTest {
+        val route = coordinator(FakeRoutes { _, _ -> RouteResult.Ok(sampleResponse("x")) })
+        route.onMapPicked(RouteField.From, 19.845, 45.255, "A")
+        route.onMapPicked(RouteField.To, 19.840, 45.238, "B")
+        route.onBuildRoute()
+        advanceUntilIdle()
+        route.showSearchTab()
+        assertEquals(BottomTab.Search, route.state.value.bottomTab)
+        assertEquals(MapRouteMode.Result, route.state.value.mode)
+        assertEquals(1, route.state.value.itineraries.size)
     }
 }
 
