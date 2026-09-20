@@ -76,26 +76,27 @@
   </g>
 
   <g filter="url(#sh-btn)">
-    <circle cx="352" cy="664" r="22" fill="#FFFFFF"/>
-    <circle cx="352" cy="664" r="7" fill="none" stroke="#00B341" stroke-width="2"/><circle cx="352" cy="664" r="2.5" fill="#00B341"/>
+    <circle cx="352" cy="672" r="22" fill="#FFFFFF"/>
+    <circle cx="352" cy="672" r="7" fill="none" stroke="#00B341" stroke-width="2"/><circle cx="352" cy="672" r="2.5" fill="#00B341"/>
   </g>
 
   <g filter="url(#sh-btn)">
-    <circle cx="352" cy="610" r="22" fill="#FFFFFF"/>
-    <text x="352" y="617" text-anchor="middle" font-family="Roboto, sans-serif" font-size="22" fill="#1F1F1F">-</text>
+    <circle cx="352" cy="618" r="22" fill="#FFFFFF"/>
+    <text x="352" y="625" text-anchor="middle" font-family="Roboto, sans-serif" font-size="22" fill="#1F1F1F">-</text>
   </g>
 
   <g filter="url(#sh-btn)">
-    <circle cx="352" cy="560" r="22" fill="#FFFFFF"/>
-    <text x="352" y="568" text-anchor="middle" font-family="Roboto, sans-serif" font-size="20" fill="#1F1F1F">+</text>
+    <circle cx="352" cy="568" r="22" fill="#FFFFFF"/>
+    <text x="352" y="576" text-anchor="middle" font-family="Roboto, sans-serif" font-size="20" fill="#1F1F1F">+</text>
   </g>
-<text x="16" y="690" font-family="Roboto, Noto Sans, sans-serif" font-size="9" fill="#6A655C">&#169; OpenStreetMap</text>
+<text x="16" y="698" font-family="Roboto, Noto Sans, sans-serif" font-size="9" fill="#6A655C">&#169; OpenStreetMap</text>
 
-  <g filter="url(#sh-card)">
-    <rect x="16" y="700" width="358" height="52" rx="14" fill="#FFFFFF"/>
-    <circle cx="42" cy="726.0" r="9" fill="none" stroke="#6A655C" stroke-width="2"/>
-    <line x1="49" y1="733.0" x2="54" y2="738.0" stroke="#6A655C" stroke-width="2" stroke-linecap="round"/>
-    <text x="64" y="732" font-family="Roboto, Noto Sans, sans-serif" font-size="16" fill="#6A655C">Pretraga&#8230;</text>
+  <g>
+    <rect x="0" y="708" width="390" height="52" fill="#FFFFFF"/>
+    <line x1="0" y1="708" x2="390" y2="708" stroke="#E4DDD3"/>
+    <circle cx="26" cy="734.0" r="9" fill="none" stroke="#6A655C" stroke-width="2"/>
+    <line x1="33" y1="741.0" x2="38" y2="746.0" stroke="#6A655C" stroke-width="2" stroke-linecap="round"/>
+    <text x="48" y="740" font-family="Roboto, Noto Sans, sans-serif" font-size="16" fill="#6A655C">Pretraga&#8230;</text>
     
     
   </g>

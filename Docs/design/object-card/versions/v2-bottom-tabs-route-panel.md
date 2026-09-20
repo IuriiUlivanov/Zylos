@@ -60,13 +60,16 @@
 
 ## 3. Панель Pretraga (активна вкладка Search)
 
-Без изменений по содержимому относительно STAGE-12:
+Содержимое как STAGE-12, контейнер — как route panel (v2.1):
 
 - одна строка: иконка 🔍 + `EditText` + ×
-- высота **52 dp**, rx **14**, margin **16 dp** по бокам
+- высота **48 dp** (`search_height`; в макетах **52 px**)
+- ширина **100%** экрана, **без** боковых margin и **без** скругления (`rx=0`)
+- **без** зазора до tab bar — panel вплотную к полосе Pretraga | Ruta
+- сверху линия-разделитель `#E4DDD3`; фон `#FFFFFF`
 - dropdown autocomplete растёт **вверх** от панели
 
-`sheet_search_gap` и flyTo anchor — от **верха tab bar**, не от search card.
+`sheet_search_gap` и flyTo anchor — от **верха search dock** (search panel + tab bar), не от плавающей search card v1.
 
 ---
 

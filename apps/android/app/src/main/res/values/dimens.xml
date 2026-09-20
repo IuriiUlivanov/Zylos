@@ -3,7 +3,7 @@
 <resources>
     <dimen name="touch_min">48dp</dimen>
     <dimen name="search_height">48dp</dimen>
-    <dimen name="search_dock_height">60dp</dimen>
+    <dimen name="search_dock_height">104dp</dimen>
     <dimen name="margin_screen">12dp</dimen>
     <dimen name="margin_screen_wide">16dp</dimen>
     <dimen name="radius_search">14dp</dimen>
@@ -11,7 +11,7 @@
     <dimen name="radius_sheet">16dp</dimen>
     <dimen name="elevation_search">8dp</dimen>
     <dimen name="elevation_sheet">12dp</dimen>
-    <dimen name="sheet_search_gap">8dp</dimen>
+    <dimen name="sheet_search_gap">0dp</dimen>
     <dimen name="sheet_step1_height">@dimen/search_height</dimen>
     <dimen name="sheet_close_size">36dp</dimen>
     <dimen name="sheet_handle_width">36dp</dimen>

@@ -49,7 +49,7 @@ STAGE-13 закрыл browse POI и Search Multi. Продукт v1 по [MOBILE
   - timeout OkHttp **8 s** (R4 клиент)
   - отмена устаревшего запроса при смене From/To
 - **Bottom tab bar** (v2, [design/object-card/versions/v2-bottom-tabs-route-panel.md](design/object-card/versions/v2-bottom-tabs-route-panel.md)):
-  - **Pretraga** (default) — search bar над tab bar
+  - **Pretraga** (default) — search panel над tab bar, **full width**, без скругления, **вплотную** к tab bar
   - **Ruta** — search bar **заменяется** route panel; tab bar **остаётся**
   - Od **и** Do заполнены → правая половина tab bar: CTA **«Napravi rutu»** (вместо label Ruta); тап → `POST /v1/route`
   - **↕ swap** справа от «Na karti», высота обеих строк — обмен Od ↔ Do; **если маршрут уже построен (Result)** — сразу повторный `POST /v1/route` для новых точек, без тапа «Napravi rutu»

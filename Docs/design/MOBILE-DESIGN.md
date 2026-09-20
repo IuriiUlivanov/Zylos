@@ -53,9 +53,11 @@
 │  │ ─── handle                  │    │
 │  │ Title / org list / fields   │    │
 │  ╰─────────────────────────────╯    │
-│  ┌─────────────────────────────┐    │  ← search chrome (z=6), всегда снизу
-│  │  🔍  Pretraga…            × │    │
-│  └─────────────────────────────┘    │
+│  ┌─────────────────────────────┐    │  ← search panel (z=6), full width
+│  │  🔍  Pretraga…            × │    │     flush к tab bar, без rx
+│  ├───────────┬─────────────────┤    │  ← tab bar Pretraga | Ruta
+│  │ Pretraga  │      Ruta       │    │
+│  └───────────┴─────────────────┘    │
 │  [ safe area / nav bar ]            │
 └─────────────────────────────────────┘
 ```
@@ -63,10 +65,10 @@
 | Зона | Правило |
 |---|---|
 | **Карта** | `match_parent`, под всем UI-слоем |
-| **Search dock** | `layout_gravity=bottom`; отступы **12 dp** по бокам; **marginBottom** = system nav inset |
-| **Search bar** | Закреплён **внизу**, не уезжает при открытии sheet; z выше карты |
+| **Search dock** | `layout_gravity=bottom`; search panel + tab bar — **full width**, **marginBottom** = system nav inset |
+| **Search bar** | Белый фон, **без** скругления; **вплотную** к tab bar; не уезжает при открытии sheet |
 | **Dropdown** | **Над** search card, max height **min(360 dp, 50 vh − search dock)**; скролл внутри |
-| **Object sheet** | `BottomSheetBehavior`; `layout_marginBottom` = search dock + **8 dp** (`sheet_search_gap`); **3 шага** — [object-card/README.md](object-card/README.md) |
+| **Object sheet** | `BottomSheetBehavior`; нижний край = верх **search dock** (динамически); **3 шага** — [object-card/README.md](object-card/README.md) |
 | **Snackbar / toast** | Над search dock + peek sheet |
 | **Атрибуция OSM** | Нижний левый угол; сдвигается вверх на search dock + peek sheet |
 | **My location FAB** | Правый край, **над** search dock (не под строкой поиска) |
@@ -103,7 +105,7 @@ Portrait — основной. Landscape: карта fullscreen, sheet **сбо�
 
 | Token | Значение | Элемент |
 |---|---|---|
-| `radius_search` | **14 dp** | Search card |
+| `radius_search` | **0 dp** (v2 dock) | Search panel — без скругления; legacy 14 dp — v1 |
 | `radius_dropdown` | **12 dp** | Dropdown списка |
 | `radius_sheet` | **16 dp** (top corners) | Bottom sheet |
 | `radius_pill` | **999 dp** | Toast, kind-badge |
@@ -116,8 +118,8 @@ Portrait — основной. Landscape: карта fullscreen, sheet **сбо�
 |---|---|---|
 | `touch_min` | **48 dp** | Минимальная зона тапа (кнопки, строки списка) |
 | `search_height` | **48 dp** | Высота поля поиска |
-| `search_dock_height` | **60 dp** | Search card + нижний margin (sheet `marginBottom`) |
-| `sheet_search_gap` | **8 dp** | Зазор sheet над search dock |
+| `search_dock_height` | **104 dp** | Search panel (48) + tab bar (56); sheet `marginBottom` |
+| `sheet_search_gap` | **0 dp** | Sheet вплотную к верху bottom stack (v2) |
 | `sheet_step1_height` | **72 dp** | Шаг 1 — minimal |
 | `sheet_step2_ratio` | **0.5** | Шаг 2 — half экрана |
 | `sheet_step3_ratio` | **1.0** | Шаг 3 — full (до status bar) |
@@ -151,7 +153,8 @@ Portrait — основной. Landscape: карта fullscreen, sheet **сбо�
 - Кнопка **×** при `query.length > 0`; `clear` не триггерит map click
 - Spinner справа только при `loading && q.length ≥ 2`
 - Placeholder: **«Pretraga…»**
-- Тень + белый фон; не Material filled TextField с underline
+- Белый фон, **full width**, **без** скругления; вплотную к tab bar (как route panel)
+- Не Material filled TextField с underline; отдельная «карточка» с тенью и margin — **не** v2
 - Debounce **150 ms** — не блокировать главный поток (U1)
 
 ### 4.2. Search dropdown

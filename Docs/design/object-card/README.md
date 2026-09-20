@@ -84,17 +84,18 @@ Search dock **не перекрывается** карточкой и **не с�
 │  │ handle · title ··········· × │  │
 │  │ body (scroll on step 2/3)    │  │
 │  ╰──────────────────────────────╯  │
-│           ↑ sheet_search_gap 8dp    │
+│           ↑ flush к search dock     │
 │  ┌─────────────────────────────┐    │
-│  │  🔍  Pretraga…            × │    │  ← search dock (всегда)
-│  └─────────────────────────────┘    │
+│  │  🔍  Pretraga…            × │    │  ← search panel (full width)
+│  ├───────────┬─────────────────┤    │  ← tab bar Pretraga | Ruta
+│  └───────────┴─────────────────┘    │
 │  nav bar inset                      │
 └─────────────────────────────────────┘
 ```
 
 | Token | Значение |
 |---|---|
-| `sheet_search_gap` | **8 dp** — зазор между низом sheet и верхом search card |
+| `sheet_search_gap` | **0 dp** — sheet вплотную к верху search dock |
 | `sheet_step1_height` | **72 dp** |
 | `sheet_step2_ratio` | **0.5** — доля контентной зоны |
 | `sheet_step3_ratio` | **1.0** — до status bar |

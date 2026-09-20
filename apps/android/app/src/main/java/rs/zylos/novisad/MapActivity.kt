@@ -66,6 +66,7 @@ import rs.zylos.novisad.map.SearchMarker
 import rs.zylos.novisad.map.SearchMarkerLayers
 import rs.zylos.novisad.map.SearchPins
 import rs.zylos.novisad.map.SearchPinsLayers
+import rs.zylos.novisad.ui.dock.BottomStackInsets
 import rs.zylos.novisad.ui.route.RouteSheetAdapter
 import rs.zylos.novisad.ui.search.SearchDropdownAdapter
 import rs.zylos.novisad.ui.search.SearchRow
@@ -84,8 +85,6 @@ import rs.zylos.novisad.viewmodel.SearchUiError
 import rs.zylos.novisad.viewmodel.SheetLogic
 import rs.zylos.novisad.viewmodel.SheetMode
 import rs.zylos.novisad.viewmodel.UserMessage
-import kotlin.math.min
-
 class MapActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMapBinding
     private lateinit var mapView: MapView
@@ -195,13 +194,12 @@ class MapActivity : AppCompatActivity() {
             val dockParams = binding.searchDock.layoutParams as CoordinatorLayout.LayoutParams
             dockParams.bottomMargin = insetBottom
             binding.searchDock.layoutParams = dockParams
-            val hostParams = binding.sheetHost.layoutParams as CoordinatorLayout.LayoutParams
-            hostParams.topMargin = insetTop
-            hostParams.bottomMargin = dockReservePx()
-            binding.sheetHost.layoutParams = hostParams
-            updateDropdownMaxHeight()
-            updateMapControls()
+            updateBottomStackInsets()
             insets
+        }
+
+        binding.searchDock.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            updateBottomStackInsets()
         }
 
         binding.orgList.layoutManager = LinearLayoutManager(this)
@@ -351,7 +349,7 @@ class MapActivity : AppCompatActivity() {
         }
         lastPinMode = state.pinMode
         lastRouteMode = state.routeMode
-        updateMapControls()
+        binding.searchDock.post { updateBottomStackInsets() }
         state.message?.let { message ->
             val text = when (message) {
                 UserMessage.NotFound -> getString(R.string.nema_zgrade)
@@ -439,7 +437,6 @@ class MapActivity : AppCompatActivity() {
         }
         binding.showAllOnMap.visibility =
             if (showingHits && state.bottomTab == BottomTab.Search) View.VISIBLE else View.GONE
-        updateDropdownMaxHeight()
     }
 
     private fun renderTabs(state: MapUiState) {
@@ -491,7 +488,6 @@ class MapActivity : AppCompatActivity() {
             binding.routeStep1Summary.text = "$fromLabel → $toLabel"
             applyRouteResultsHeight()
         }
-        binding.searchDock.post { updateMapControls() }
     }
 
     private fun setRouteText(input: EditText, value: String) {
@@ -532,8 +528,7 @@ class MapActivity : AppCompatActivity() {
         val params = binding.routeResults.layoutParams
         params.height = when (routeSheetStep) {
             1 -> dp(MapDefaults.ROUTE_SHEET_STEP1_DP)
-            3 -> (binding.coordinator.height - insetTop - dp(MapDefaults.ROUTE_PANEL_HEIGHT_DP) -
-                dp(MapDefaults.BOTTOM_TAB_HEIGHT_DP) - insetBottom).coerceAtLeast(dp(MapDefaults.ROUTE_SHEET_STEP2_DP))
+            3 -> BottomStackInsets.routeResultsFullHeightPx(binding, insetTop, insetBottom, ::dp)
             else -> dp(MapDefaults.ROUTE_SHEET_STEP2_DP)
         }
         binding.routeResults.layoutParams = params
@@ -831,10 +826,17 @@ class MapActivity : AppCompatActivity() {
         mapLibre.easeCamera(CameraUpdateFactory.zoomTo(next), MapDefaults.SHEET_ANIMATION_MS)
     }
 
-    private fun updateDropdownMaxHeight() {
-        val half = (resources.displayMetrics.heightPixels * 0.5).toInt()
-        val dock = resources.getDimensionPixelSize(R.dimen.search_dock_height) + dp(12) + insetBottom
-        binding.searchDropdown.maxHeightPx = min(dp(360), (half - dock).coerceAtLeast(dp(120)))
+    private fun updateBottomStackInsets() {
+        val hostParams = binding.sheetHost.layoutParams as CoordinatorLayout.LayoutParams
+        hostParams.topMargin = insetTop
+        val reserve = dockReservePx()
+        if (hostParams.bottomMargin != reserve) {
+            hostParams.bottomMargin = reserve
+            binding.sheetHost.layoutParams = hostParams
+        }
+        binding.searchDropdown.maxHeightPx =
+            BottomStackInsets.dropdownMaxHeightPx(binding, insetTop, insetBottom, ::dp)
+        updateMapControls()
     }
 
     private fun updateMapControls() {
@@ -847,16 +849,7 @@ class MapActivity : AppCompatActivity() {
         map?.uiSettings?.setAttributionMargins(dp(12), 0, 0, attributionBottom)
     }
 
-    private fun dockReservePx(): Int {
-        val gap = resources.getDimensionPixelSize(R.dimen.sheet_search_gap)
-        val dockHeight = if (binding.searchDock.height > 0) {
-            binding.searchDock.height
-        } else {
-            dp(MapDefaults.BOTTOM_TAB_HEIGHT_DP + 60)
-        }
-        val dockMargin = (binding.searchDock.layoutParams as CoordinatorLayout.LayoutParams).bottomMargin
-        return dockHeight + dockMargin + gap
-    }
+    private fun dockReservePx(): Int = BottomStackInsets.dockReservePx(binding, ::dp)
 
     private fun controlsBottomMarginPx(): Int {
         val gap = dp(MapDefaults.CONTROL_GAP_DP)

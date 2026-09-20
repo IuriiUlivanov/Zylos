@@ -86,41 +86,42 @@
   </g>
 
   <g filter="url(#sh-btn)">
-    <circle cx="352" cy="364" r="22" fill="#FFFFFF"/>
-    <circle cx="352" cy="364" r="7" fill="none" stroke="#00B341" stroke-width="2"/><circle cx="352" cy="364" r="2.5" fill="#00B341"/>
+    <circle cx="352" cy="372" r="22" fill="#FFFFFF"/>
+    <circle cx="352" cy="372" r="7" fill="none" stroke="#00B341" stroke-width="2"/><circle cx="352" cy="372" r="2.5" fill="#00B341"/>
   </g>
 
   <g filter="url(#sh-btn)">
-    <circle cx="352" cy="310" r="22" fill="#FFFFFF"/>
-    <text x="352" y="317" text-anchor="middle" font-family="Roboto, sans-serif" font-size="22" fill="#1F1F1F">-</text>
+    <circle cx="352" cy="318" r="22" fill="#FFFFFF"/>
+    <text x="352" y="325" text-anchor="middle" font-family="Roboto, sans-serif" font-size="22" fill="#1F1F1F">-</text>
   </g>
 
   <g filter="url(#sh-btn)">
-    <circle cx="352" cy="260" r="22" fill="#FFFFFF"/>
-    <text x="352" y="268" text-anchor="middle" font-family="Roboto, sans-serif" font-size="20" fill="#1F1F1F">+</text>
+    <circle cx="352" cy="268" r="22" fill="#FFFFFF"/>
+    <text x="352" y="276" text-anchor="middle" font-family="Roboto, sans-serif" font-size="20" fill="#1F1F1F">+</text>
   </g>
-<text x="16" y="390" font-family="Roboto, Noto Sans, sans-serif" font-size="9" fill="#6A655C">&#169; OpenStreetMap</text>
+<text x="16" y="398" font-family="Roboto, Noto Sans, sans-serif" font-size="9" fill="#6A655C">&#169; OpenStreetMap</text>
 
   <g filter="url(#sh-sheet)">
     <path d="M 0 462 Q 0 446 16 446 L 374 446 Q 390 446 390 462 L 390 746 L 0 746 Z" fill="#FFFFFF"/>
     <rect x="177" y="456" width="36" height="4" rx="2" fill="#D0CBC3"/>
-    <text x="16" y="436" font-family="Roboto, Noto Sans, sans-serif" font-size="16" font-weight="650" fill="#1F1F1F">Apoteka Benu</text>
-<text x="16" y="456" font-family="Roboto, Noto Sans, sans-serif" font-size="12" fill="#6A655C">Apoteka</text>
-<circle cx="358" cy="432" r="16" fill="#F3EFE8"/>
-<text x="358" y="437" text-anchor="middle" font-family="Roboto, sans-serif" font-size="16" fill="#6A655C">&#215;</text>
-    <text x="16" y="500" font-family="Roboto, Noto Sans, sans-serif" font-size="13" fill="#6A655C">Telefon</text>
-    <text x="108" y="500" font-family="Roboto, Noto Sans, sans-serif" font-size="14" fill="#00B341">021 450 112</text>
-    <text x="16" y="532" font-family="Roboto, Noto Sans, sans-serif" font-size="13" fill="#6A655C">Adresa</text>
-    <text x="108" y="532" font-family="Roboto, Noto Sans, sans-serif" font-size="14" fill="#1F1F1F">Bulevar oslobo&#273;enja 47</text>
-    <text x="16" y="564" font-family="Roboto, Noto Sans, sans-serif" font-size="13" fill="#6A655C">Radno vreme</text>
-    <text x="108" y="564" font-family="Roboto, Noto Sans, sans-serif" font-size="14" fill="#1F1F1F">08:00-21:00</text>
+    <text x="16" y="444" font-family="Roboto, Noto Sans, sans-serif" font-size="16" font-weight="650" fill="#1F1F1F">Apoteka Benu</text>
+<text x="16" y="464" font-family="Roboto, Noto Sans, sans-serif" font-size="12" fill="#6A655C">Apoteka</text>
+<circle cx="358" cy="440" r="16" fill="#F3EFE8"/>
+<text x="358" y="445" text-anchor="middle" font-family="Roboto, sans-serif" font-size="16" fill="#6A655C">&#215;</text>
+    <text x="16" y="508" font-family="Roboto, Noto Sans, sans-serif" font-size="13" fill="#6A655C">Telefon</text>
+    <text x="108" y="508" font-family="Roboto, Noto Sans, sans-serif" font-size="14" fill="#00B341">021 450 112</text>
+    <text x="16" y="540" font-family="Roboto, Noto Sans, sans-serif" font-size="13" fill="#6A655C">Adresa</text>
+    <text x="108" y="540" font-family="Roboto, Noto Sans, sans-serif" font-size="14" fill="#1F1F1F">Bulevar oslobo&#273;enja 47</text>
+    <text x="16" y="572" font-family="Roboto, Noto Sans, sans-serif" font-size="13" fill="#6A655C">Radno vreme</text>
+    <text x="108" y="572" font-family="Roboto, Noto Sans, sans-serif" font-size="14" fill="#1F1F1F">08:00-21:00</text>
   </g>
 
-  <g filter="url(#sh-card)">
-    <rect x="16" y="700" width="358" height="52" rx="14" fill="#FFFFFF"/>
-    <circle cx="42" cy="726.0" r="9" fill="none" stroke="#6A655C" stroke-width="2"/>
-    <line x1="49" y1="733.0" x2="54" y2="738.0" stroke="#6A655C" stroke-width="2" stroke-linecap="round"/>
-    <text x="64" y="732" font-family="Roboto, Noto Sans, sans-serif" font-size="16" fill="#6A655C">Pretraga&#8230;</text>
+  <g>
+    <rect x="0" y="708" width="390" height="52" fill="#FFFFFF"/>
+    <line x1="0" y1="708" x2="390" y2="708" stroke="#E4DDD3"/>
+    <circle cx="26" cy="734.0" r="9" fill="none" stroke="#6A655C" stroke-width="2"/>
+    <line x1="33" y1="741.0" x2="38" y2="746.0" stroke="#6A655C" stroke-width="2" stroke-linecap="round"/>
+    <text x="48" y="740" font-family="Roboto, Noto Sans, sans-serif" font-size="16" fill="#6A655C">Pretraga&#8230;</text>
     
     
   </g>

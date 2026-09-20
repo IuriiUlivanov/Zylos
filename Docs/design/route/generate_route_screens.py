@@ -36,7 +36,7 @@ ROUTE_ROW_H = 44
 ROUTE_PANEL_PAD = 12
 ROUTE_PANEL_H = ROUTE_PANEL_PAD + ROUTE_ROW_H + 8 + ROUTE_ROW_H + 8 + MODE_ROW_H + ROUTE_PANEL_PAD
 ROUTE_PANEL_Y = TAB_Y - ROUTE_PANEL_H
-SEARCH_PANEL_Y = TAB_Y - PANEL_GAP - SEARCH_PANEL_H
+SEARCH_PANEL_Y = TAB_Y - SEARCH_PANEL_H
 SHEET_BOTTOM_SEARCH = SEARCH_PANEL_Y - PANEL_GAP
 SHEET_BOTTOM_ROUTE = ROUTE_PANEL_Y - PANEL_GAP
 
@@ -136,23 +136,27 @@ def search_panel(
     placeholder: bool = True,
     focused: bool = False,
 ) -> str:
-    x, y, w, h = 16, SEARCH_PANEL_Y, 358, SEARCH_PANEL_H
+    y, h = SEARCH_PANEL_Y, SEARCH_PANEL_H
+    pad_x = 16
+    icon_x = pad_x + 10
+    field_x = pad_x + 32
     if placeholder and not query:
-        field = f'<text x="{x + 48}" y="{y + 32}" font-family="Roboto, Noto Sans, sans-serif" font-size="16" fill="#6A655C">{T("Pretraga…")}</text>'
+        field = f'<text x="{field_x}" y="{y + 32}" font-family="Roboto, Noto Sans, sans-serif" font-size="16" fill="#6A655C">{T("Pretraga…")}</text>'
         trailing = ""
     else:
-        field = f'<text x="{x + 48}" y="{y + 32}" font-family="Roboto, Noto Sans, sans-serif" font-size="16" fill="#1F1F1F">{T(query)}</text>'
+        field = f'<text x="{field_x}" y="{y + 32}" font-family="Roboto, Noto Sans, sans-serif" font-size="16" fill="#1F1F1F">{T(query)}</text>'
         trailing = f"""
-    <circle cx="{x + w - 28}" cy="{y + h/2}" r="12" fill="#F3EFE8"/>
-    <text x="{x + w - 28}" y="{y + h/2 + 5}" text-anchor="middle" font-family="Roboto, sans-serif" font-size="14" fill="#6A655C">{T("×")}</text>"""
+    <circle cx="{W - pad_x - 12}" cy="{y + h/2}" r="12" fill="#F3EFE8"/>
+    <text x="{W - pad_x - 12}" y="{y + h/2 + 5}" text-anchor="middle" font-family="Roboto, sans-serif" font-size="14" fill="#6A655C">{T("×")}</text>"""
     caret = ""
     if focused:
-        caret = f'<rect x="{x + 48 + 7 * len(query)}" y="{y + 16}" width="1.5" height="20" fill="#00B341"/>'
+        caret = f'<rect x="{field_x + 7 * len(query)}" y="{y + 16}" width="1.5" height="20" fill="#00B341"/>'
     return f"""
-  <g filter="url(#sh-card)">
-    <rect x="{x}" y="{y}" width="{w}" height="{h}" rx="14" fill="#FFFFFF"/>
-    <circle cx="{x + 26}" cy="{y + h/2}" r="9" fill="none" stroke="#6A655C" stroke-width="2"/>
-    <line x1="{x + 33}" y1="{y + h/2 + 7}" x2="{x + 38}" y2="{y + h/2 + 12}" stroke="#6A655C" stroke-width="2" stroke-linecap="round"/>
+  <g>
+    <rect x="0" y="{y}" width="{W}" height="{h}" fill="#FFFFFF"/>
+    <line x1="0" y1="{y}" x2="{W}" y2="{y}" stroke="#E4DDD3"/>
+    <circle cx="{icon_x}" cy="{y + h/2}" r="9" fill="none" stroke="#6A655C" stroke-width="2"/>
+    <line x1="{icon_x + 7}" y1="{y + h/2 + 7}" x2="{icon_x + 12}" y2="{y + h/2 + 12}" stroke="#6A655C" stroke-width="2" stroke-linecap="round"/>
     {field}
     {caret}
     {trailing}
@@ -315,7 +319,7 @@ def route_dropdown(
 
 def map_controls_v2(*, bottom_ui: int | None = None, sheet_h: int = 0) -> str:
     if bottom_ui is None:
-        bottom_ui = SEARCH_PANEL_H + TAB_H + PANEL_GAP
+        bottom_ui = SEARCH_PANEL_H + TAB_H
     panel_top = TAB_Y - bottom_ui + TAB_H
     if bottom_ui >= ROUTE_PANEL_H + TAB_H:
         panel_top = ROUTE_PANEL_Y
