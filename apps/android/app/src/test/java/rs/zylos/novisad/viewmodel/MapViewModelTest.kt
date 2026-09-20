@@ -11,6 +11,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -23,10 +25,9 @@ import rs.zylos.novisad.data.api.LonLat
 import rs.zylos.novisad.data.api.OrgDetailResponse
 import rs.zylos.novisad.data.repository.BuildingAtResult
 import rs.zylos.novisad.data.repository.BuildingDetailResult
-import rs.zylos.novisad.data.repository.BuildingRepository
-import rs.zylos.novisad.data.repository.OrgBboxResult
 import rs.zylos.novisad.data.repository.OrgDetailResult
-import rs.zylos.novisad.data.repository.OrgRepository
+import rs.zylos.novisad.testing.FakeBuildings
+import rs.zylos.novisad.testing.FakeOrgs
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
@@ -60,9 +61,9 @@ class MapViewModelTest {
         vm.onMapClick(2.0, 45.0)
         advanceUntilIdle()
         val state = vm.state.first()
-        assertEquals(SheetMode.Building, state.mode)
-        assertEquals("new", state.building?.id)
-        assertTrue(state.highlightJson!!.contains("FeatureCollection"))
+        assertEquals(SheetMode.Building, state.sheet.mode)
+        assertEquals("new", state.sheet.building?.id)
+        assertEquals("Polygon", state.overlay.highlight?.type)
     }
 
     @Test
@@ -75,7 +76,7 @@ class MapViewModelTest {
         vm.onMapClick(19.84, 45.25)
         advanceUntilIdle()
         val state = vm.state.first()
-        assertEquals(SheetMode.Idle, state.mode)
+        assertEquals(SheetMode.Idle, state.sheet.mode)
         assertEquals(UserMessage.NotFound, state.message)
         assertTrue(state.haptic)
     }
@@ -86,17 +87,17 @@ class MapViewModelTest {
             atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
             byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
         )
-        val orgs = FakeOrgs { OrgDetailResult.Found(sampleOrg()) }
+        val orgs = FakeOrgs(byIdFn = { OrgDetailResult.Found(sampleOrg()) })
         val vm = MapViewModel(buildings, orgs)
         vm.onMapClick(19.84, 45.25)
         advanceUntilIdle()
         vm.onOrgSelected("org:osm:n1")
         advanceUntilIdle()
-        assertEquals(SheetMode.Organization, vm.state.value.mode)
+        assertEquals(SheetMode.Organization, vm.state.value.sheet.mode)
         vm.onBackToBuilding()
-        assertEquals(SheetMode.Building, vm.state.value.mode)
-        assertEquals("b1", vm.state.value.building?.id)
-        assertTrue(vm.state.value.highlightJson != null)
+        assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
+        assertEquals("b1", vm.state.value.sheet.building?.id)
+        assertNotNull(vm.state.value.overlay.highlight)
     }
 
     @Test
@@ -105,22 +106,22 @@ class MapViewModelTest {
             atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
             byIdFn = { id -> BuildingDetailResult.Found(sampleBuilding(id)) },
         )
-        val orgs = FakeOrgs { id ->
+        val orgs = FakeOrgs(byIdFn = { id ->
             OrgDetailResult.Found(sampleOrg().copy(id = id, building_id = "b2"))
-        }
+        })
         val vm = MapViewModel(buildings, orgs)
         vm.onMapClick(19.84, 45.25)
         advanceUntilIdle()
-        assertEquals("b1", vm.state.value.building?.id)
+        assertEquals("b1", vm.state.value.sheet.building?.id)
 
         vm.onOrgPinClick("org:osm:n99")
-        assertEquals(null, vm.state.value.highlightJson)
+        assertNull(vm.state.value.overlay.highlight)
         advanceUntilIdle()
 
-        assertEquals(SheetMode.Organization, vm.state.value.mode)
-        assertEquals("org:osm:n99", vm.state.value.org?.id)
-        assertEquals("b2", vm.state.value.building?.id)
-        assertTrue(vm.state.value.highlightJson!!.contains("FeatureCollection"))
+        assertEquals(SheetMode.Organization, vm.state.value.sheet.mode)
+        assertEquals("org:osm:n99", vm.state.value.sheet.org?.id)
+        assertEquals("b2", vm.state.value.sheet.building?.id)
+        assertEquals("Polygon", vm.state.value.overlay.highlight?.type)
     }
 
     @Test
@@ -129,37 +130,16 @@ class MapViewModelTest {
             atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
             byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
         )
-        val orgs = FakeOrgs { OrgDetailResult.Found(sampleOrg().copy(building_id = null)) }
+        val orgs = FakeOrgs(byIdFn = { OrgDetailResult.Found(sampleOrg().copy(building_id = null)) })
         val vm = MapViewModel(buildings, orgs)
         vm.onMapClick(19.84, 45.25)
         advanceUntilIdle()
         vm.onOrgPinClick("org:osm:n1")
         advanceUntilIdle()
 
-        assertEquals(SheetMode.Organization, vm.state.value.mode)
-        assertEquals(null, vm.state.value.building)
-        assertEquals(null, vm.state.value.highlightJson)
-    }
-
-    private class FakeBuildings(
-        private val atFn: suspend (Double, Double) -> BuildingAtResult,
-        private val byIdFn: suspend (String) -> BuildingDetailResult,
-    ) : BuildingRepository {
-        override suspend fun at(lon: Double, lat: Double) = atFn(lon, lat)
-        override suspend fun byId(id: String) = byIdFn(id)
-    }
-
-    private class FakeOrgs(
-        private val byIdFn: suspend (String) -> OrgDetailResult = { OrgDetailResult.Network },
-    ) : OrgRepository {
-        override suspend fun byId(id: String) = byIdFn(id)
-        override suspend fun inBbox(
-            minLon: Double,
-            minLat: Double,
-            maxLon: Double,
-            maxLat: Double,
-            limit: Int,
-        ) = OrgBboxResult.Ok(emptyList())
+        assertEquals(SheetMode.Organization, vm.state.value.sheet.mode)
+        assertEquals(null, vm.state.value.sheet.building)
+        assertEquals(null, vm.state.value.overlay.highlight)
     }
 
     private fun sampleBuilding(id: String) = BuildingDetailResponse(

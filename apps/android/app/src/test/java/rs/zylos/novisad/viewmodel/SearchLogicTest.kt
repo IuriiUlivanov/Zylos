@@ -25,18 +25,15 @@ import rs.zylos.novisad.data.api.OrgDetailResponse
 import rs.zylos.novisad.data.api.SearchHit
 import rs.zylos.novisad.data.api.SearchKind
 import rs.zylos.novisad.data.api.SearchResponse
-import rs.zylos.novisad.data.local.SearchHistoryEntity
-import rs.zylos.novisad.data.local.SearchHistoryStore
-import rs.zylos.novisad.data.repository.BuildingAtResult
 import rs.zylos.novisad.data.repository.BuildingDetailResult
-import rs.zylos.novisad.data.repository.BuildingRepository
-import rs.zylos.novisad.data.repository.OrgBboxResult
 import rs.zylos.novisad.data.repository.OrgDetailResult
-import rs.zylos.novisad.data.repository.OrgRepository
-import rs.zylos.novisad.data.repository.SearchRepository
 import rs.zylos.novisad.data.repository.SearchResult
 import rs.zylos.novisad.map.MapDefaults
 import rs.zylos.novisad.map.SearchMarker
+import rs.zylos.novisad.testing.FakeBuildings
+import rs.zylos.novisad.testing.FakeHistory
+import rs.zylos.novisad.testing.FakeOrgs
+import rs.zylos.novisad.testing.FakeSearch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchLogicTest {
@@ -60,7 +57,7 @@ class SearchLogicTest {
         advanceTimeBy(300)
         advanceUntilIdle()
         assertEquals(0, search.calls.size)
-        assertTrue(vm.state.value.hits.isEmpty())
+        assertTrue(vm.state.value.search.hits.isEmpty())
         assertFalse(SearchLogic.shouldRequest("a"))
         assertTrue(SearchLogic.shouldRequest("ap"))
     }
@@ -101,7 +98,7 @@ class SearchLogicTest {
         advanceUntilIdle()
         releaseStale.complete(Unit)
         advanceUntilIdle()
-        assertEquals("fresh", vm.state.value.hits.single().id)
+        assertEquals("fresh", vm.state.value.search.hits.single().id)
     }
 
     @Test
@@ -121,10 +118,10 @@ class SearchLogicTest {
         val vm = MapViewModel(FakeBuildings(), FakeOrgs(), FakeSearch(), FakeHistory())
         vm.onSelectHit(sampleHit(id = "addr:1", kind = SearchKind.address, buildingId = null, label = "Bulevar 47"))
         advanceUntilIdle()
-        assertEquals(SheetMode.Peek, vm.state.value.mode)
-        assertEquals("Bulevar 47", vm.state.value.peek?.title)
-        assertEquals("Adresa", vm.state.value.peek?.subtitle)
-        assertTrue(vm.state.value.markerJson!!.contains("19.84"))
+        assertEquals(SheetMode.Peek, vm.state.value.sheet.mode)
+        assertEquals("Bulevar 47", vm.state.value.sheet.peek?.title)
+        assertEquals("Adresa", vm.state.value.sheet.peek?.subtitle)
+        assertEquals(19.84, vm.state.value.overlay.marker?.lon ?: 0.0, 0.0)
         assertEquals(MapDefaults.FLY_MIN_ZOOM, vm.state.value.camera?.zoom ?: MapDefaults.FLY_MIN_ZOOM, 0.0)
         assertEquals(MapDefaults.SEARCH_FLYTO_ANCHOR_Y, vm.state.value.camera?.anchorYFromBottom ?: 0f, 0.0f)
         assertEquals(HitSheet.Peek, SearchLogic.destination(sampleHit(kind = SearchKind.address, buildingId = null), false, false))
@@ -133,14 +130,14 @@ class SearchLogicTest {
     @Test
     fun orgHitWithBuildingOpensOrgSheet() = runTest(dispatcher) {
         val buildings = FakeBuildings(byIdFn = { BuildingDetailResult.Found(sampleBuilding(it)) })
-        val orgs = FakeOrgs { OrgDetailResult.Found(sampleOrg()) }
+        val orgs = FakeOrgs(byIdFn = { OrgDetailResult.Found(sampleOrg()) })
         val vm = MapViewModel(buildings, orgs, FakeSearch(), FakeHistory())
         vm.onSelectHit(sampleHit(id = "org:osm:n1", kind = SearchKind.organization, buildingId = "b1"))
         advanceUntilIdle()
-        assertEquals(SheetMode.Organization, vm.state.value.mode)
-        assertEquals("org:osm:n1", vm.state.value.org?.id)
-        assertEquals("b1", vm.state.value.building?.id)
-        assertTrue(vm.state.value.highlightJson!!.contains("FeatureCollection"))
+        assertEquals(SheetMode.Organization, vm.state.value.sheet.mode)
+        assertEquals("org:osm:n1", vm.state.value.sheet.org?.id)
+        assertEquals("b1", vm.state.value.sheet.building?.id)
+        assertEquals("Polygon", vm.state.value.overlay.highlight?.type)
         assertEquals(
             HitSheet.Organization,
             SearchLogic.destination(sampleHit(buildingId = "b1"), true, true),
@@ -153,8 +150,8 @@ class SearchLogicTest {
         val vm = MapViewModel(buildings, FakeOrgs(), FakeSearch(), FakeHistory())
         vm.onSelectHit(sampleHit(id = "org:1", kind = SearchKind.organization, buildingId = "b1"))
         advanceUntilIdle()
-        assertEquals(SheetMode.Building, vm.state.value.mode)
-        assertEquals("b1", vm.state.value.building?.id)
+        assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
+        assertEquals("b1", vm.state.value.sheet.building?.id)
         assertEquals(
             HitSheet.Building,
             SearchLogic.destination(sampleHit(buildingId = "b1"), true, false),
@@ -164,12 +161,12 @@ class SearchLogicTest {
     @Test
     fun orgHitFallsBackToOrgSheetWhenBuildingMissing() = runTest(dispatcher) {
         val buildings = FakeBuildings(byIdFn = { BuildingDetailResult.NotFound })
-        val orgs = FakeOrgs { OrgDetailResult.Found(sampleOrg()) }
+        val orgs = FakeOrgs(byIdFn = { OrgDetailResult.Found(sampleOrg()) })
         val vm = MapViewModel(buildings, orgs, FakeSearch(), FakeHistory())
         vm.onSelectHit(sampleHit(id = "org:osm:n1", kind = SearchKind.organization, buildingId = "missing"))
         advanceUntilIdle()
-        assertEquals(SheetMode.Organization, vm.state.value.mode)
-        assertEquals("org:osm:n1", vm.state.value.org?.id)
+        assertEquals(SheetMode.Organization, vm.state.value.sheet.mode)
+        assertEquals("org:osm:n1", vm.state.value.sheet.org?.id)
         assertEquals(
             HitSheet.Organization,
             SearchLogic.destination(sampleHit(kind = SearchKind.organization), false, true),
@@ -178,12 +175,12 @@ class SearchLogicTest {
 
     @Test
     fun orgHitWithoutBuildingLoadsOrgSheet() = runTest(dispatcher) {
-        val orgs = FakeOrgs { OrgDetailResult.Found(sampleOrg()) }
+        val orgs = FakeOrgs(byIdFn = { OrgDetailResult.Found(sampleOrg()) })
         val vm = MapViewModel(FakeBuildings(), orgs, FakeSearch(), FakeHistory())
         vm.onSelectHit(sampleHit(id = "org:osm:n1", kind = SearchKind.organization, buildingId = null))
         advanceUntilIdle()
-        assertEquals(SheetMode.Organization, vm.state.value.mode)
-        assertNull(vm.state.value.building)
+        assertEquals(SheetMode.Organization, vm.state.value.sheet.mode)
+        assertNull(vm.state.value.sheet.building)
     }
 
     @Test
@@ -192,10 +189,10 @@ class SearchLogicTest {
         vm.onSelectHit(sampleHit(kind = SearchKind.address, buildingId = null))
         advanceUntilIdle()
         vm.onClearSearch()
-        assertEquals(SheetMode.Idle, vm.state.value.mode)
-        assertNull(vm.state.value.markerJson)
-        assertEquals("", vm.state.value.query)
-        assertTrue(vm.state.value.hits.isEmpty())
+        assertEquals(SheetMode.Idle, vm.state.value.sheet.mode)
+        assertNull(vm.state.value.overlay.marker)
+        assertEquals("", vm.state.value.search.query)
+        assertTrue(vm.state.value.search.hits.isEmpty())
     }
 
     @Test
@@ -211,7 +208,7 @@ class SearchLogicTest {
         vm.onMapClick(19.84, 45.25)
         advanceUntilIdle()
         assertEquals(0, buildings.atCalls)
-        assertFalse(vm.state.value.searchFocused)
+        assertFalse(vm.state.value.search.focused)
     }
 
     @Test
@@ -250,62 +247,6 @@ class SearchLogicTest {
         assertEquals("selected-marker", SearchMarker.LAYER_ID)
     }
 
-    private class FakeSearch(
-        private val handler: suspend (String, Double, Double) -> SearchResult = { q, _, _ ->
-            SearchResult.Ok(SearchResponse(q, listOf(sampleHit()), 1))
-        },
-    ) : SearchRepository {
-        data class Call(val q: String, val lat: Double, val lon: Double)
-        val calls = mutableListOf<Call>()
-        override suspend fun search(q: String, lat: Double, lon: Double, limit: Int): SearchResult {
-            calls += Call(q, lat, lon)
-            return handler(q, lat, lon)
-        }
-    }
-
-    private class FakeHistory : SearchHistoryStore {
-        private val rows = mutableListOf<SearchHistoryEntity>()
-        override suspend fun recent(): List<SearchHistoryEntity> = rows.toList()
-        override suspend fun save(query: String, hitId: String?, label: String?, kind: String?, categorySlug: String?) {
-            rows.removeAll { it.query == query }
-            rows.add(
-                0,
-                SearchHistoryEntity(
-                    query = query,
-                    hitId = hitId,
-                    label = label,
-                    kind = kind,
-                    categorySlug = categorySlug,
-                    timestamp = rows.size.toLong(),
-                ),
-            )
-        }
-    }
-
-    private class FakeBuildings(
-        private val atFn: suspend (Double, Double) -> BuildingAtResult = { _, _ -> BuildingAtResult.NotFound },
-        private val byIdFn: suspend (String) -> BuildingDetailResult = { BuildingDetailResult.NotFound },
-    ) : BuildingRepository {
-        var atCalls = 0
-        override suspend fun at(lon: Double, lat: Double): BuildingAtResult {
-            atCalls += 1
-            return atFn(lon, lat)
-        }
-        override suspend fun byId(id: String) = byIdFn(id)
-    }
-
-    private class FakeOrgs(
-        private val byIdFn: suspend (String) -> OrgDetailResult = { OrgDetailResult.Network },
-    ) : OrgRepository {
-        override suspend fun byId(id: String) = byIdFn(id)
-        override suspend fun inBbox(
-            minLon: Double,
-            minLat: Double,
-            maxLon: Double,
-            maxLat: Double,
-            limit: Int,
-        ) = OrgBboxResult.Ok(emptyList())
-    }
 }
 
 private fun sampleHit(

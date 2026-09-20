@@ -12,7 +12,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -20,19 +19,15 @@ import rs.zylos.novisad.data.api.OrgPin
 import rs.zylos.novisad.data.api.SearchHit
 import rs.zylos.novisad.data.api.SearchKind
 import rs.zylos.novisad.data.api.SearchResponse
-import rs.zylos.novisad.data.local.SearchHistoryEntity
-import rs.zylos.novisad.data.local.SearchHistoryStore
-import rs.zylos.novisad.data.repository.BuildingAtResult
-import rs.zylos.novisad.data.repository.BuildingDetailResult
-import rs.zylos.novisad.data.repository.BuildingRepository
 import rs.zylos.novisad.data.repository.OrgBboxResult
-import rs.zylos.novisad.data.repository.OrgDetailResult
-import rs.zylos.novisad.data.repository.OrgRepository
-import rs.zylos.novisad.data.repository.SearchRepository
 import rs.zylos.novisad.data.repository.SearchResult
 import rs.zylos.novisad.map.MapDefaults
 import rs.zylos.novisad.map.OrgPinLimits
 import rs.zylos.novisad.map.SearchPins
+import rs.zylos.novisad.testing.FakeBuildings
+import rs.zylos.novisad.testing.FakeHistory
+import rs.zylos.novisad.testing.FakeOrgs
+import rs.zylos.novisad.testing.FakeSearch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchMultiLogicTest {
@@ -69,45 +64,60 @@ class SearchMultiLogicTest {
     @Test
     fun autoMultiFromCategoryHitsAndCapsPins() = runTest(dispatcher) {
         val hits = List(16) { orgHit("org:$it") }
-        val vm = MapViewModel(FakeBuildings(), FakeOrgs(), FakeSearch { SearchResult.Ok(SearchResponse("apotek", hits, 1)) }, FakeHistory())
+        val vm = MapViewModel(
+            FakeBuildings(),
+            FakeOrgs(),
+            FakeSearch { _, _, _ -> SearchResult.Ok(SearchResponse("apotek", hits, 1)) },
+            FakeHistory(),
+        )
         vm.onQueryChange("apotek")
         advanceTimeBy(MapDefaults.SEARCH_DEBOUNCE_MS)
         advanceUntilIdle()
-        assertEquals(MapPinMode.SearchMulti, vm.state.value.pinMode)
-        assertEquals(SheetMode.SearchList, vm.state.value.mode)
-        assertTrue(vm.state.value.searchPinsJson!!.contains("org:0"))
-        assertEquals(15, """"id":""".toRegex().findAll(vm.state.value.searchPinsJson!!).count())
-        assertNull(vm.state.value.markerJson)
-        assertEquals(16, vm.state.value.hits.size)
+        assertEquals(MapPinMode.SearchMulti, vm.state.value.overlay.pinMode)
+        assertEquals(SheetMode.SearchList, vm.state.value.sheet.mode)
+        assertTrue(vm.state.value.overlay.searchPins.any { it.id == "org:0" })
+        assertEquals(15, vm.state.value.overlay.searchPins.size)
+        assertEquals(null, vm.state.value.overlay.marker)
+        assertEquals(16, vm.state.value.search.hits.size)
         assertEquals("search-pins", SearchPins.SOURCE_ID)
     }
 
     @Test
     fun showAllOnMapUsesCurrentHits() = runTest(dispatcher) {
         val hits = listOf(orgHit("1", slug = "cafe"), orgHit("2"), addrHit("a"))
-        val vm = MapViewModel(FakeBuildings(), FakeOrgs(), FakeSearch { SearchResult.Ok(SearchResponse("x", hits, 1)) }, FakeHistory())
+        val vm = MapViewModel(
+            FakeBuildings(),
+            FakeOrgs(),
+            FakeSearch { _, _, _ -> SearchResult.Ok(SearchResponse("x", hits, 1)) },
+            FakeHistory(),
+        )
         vm.onQueryChange("xx")
         advanceTimeBy(MapDefaults.SEARCH_DEBOUNCE_MS)
         advanceUntilIdle()
-        assertEquals(MapPinMode.Browse, vm.state.value.pinMode)
+        assertEquals(MapPinMode.Browse, vm.state.value.overlay.pinMode)
         vm.onShowAllOnMap()
-        assertEquals(MapPinMode.SearchMulti, vm.state.value.pinMode)
-        assertEquals(3, """"id":""".toRegex().findAll(vm.state.value.searchPinsJson!!).count())
-        assertEquals(SheetMode.SearchList, vm.state.value.mode)
+        assertEquals(MapPinMode.SearchMulti, vm.state.value.overlay.pinMode)
+        assertEquals(3, vm.state.value.overlay.searchPins.size)
+        assertEquals(SheetMode.SearchList, vm.state.value.sheet.mode)
     }
 
     @Test
     fun clearSearchLeavesBrowseAndDropsMultiPins() = runTest(dispatcher) {
         val hits = listOf(orgHit("1"), orgHit("2"), orgHit("3"))
-        val vm = MapViewModel(FakeBuildings(), FakeOrgs(), FakeSearch { SearchResult.Ok(SearchResponse("apotek", hits, 1)) }, FakeHistory())
+        val vm = MapViewModel(
+            FakeBuildings(),
+            FakeOrgs(),
+            FakeSearch { _, _, _ -> SearchResult.Ok(SearchResponse("apotek", hits, 1)) },
+            FakeHistory(),
+        )
         vm.onQueryChange("apotek")
         advanceTimeBy(MapDefaults.SEARCH_DEBOUNCE_MS)
         advanceUntilIdle()
         vm.onClearSearch()
-        assertEquals(MapPinMode.Browse, vm.state.value.pinMode)
-        assertNull(vm.state.value.searchPinsJson)
-        assertEquals("", vm.state.value.query)
-        assertEquals(SheetMode.Idle, vm.state.value.mode)
+        assertEquals(MapPinMode.Browse, vm.state.value.overlay.pinMode)
+        assertTrue(vm.state.value.overlay.searchPins.isEmpty())
+        assertEquals("", vm.state.value.search.query)
+        assertEquals(SheetMode.Idle, vm.state.value.sheet.mode)
     }
 
     @Test
@@ -132,34 +142,41 @@ class SearchMultiLogicTest {
         advanceTimeBy(400)
         advanceUntilIdle()
         assertEquals(0, orgs.bboxCalls.size)
-        assertTrue(vm.state.value.orgPinsJson!!.contains("\"features\":[]"))
+        assertTrue(vm.state.value.overlay.orgPins.isEmpty())
     }
 
     @Test
     fun staleBboxResponseIsIgnored() = runTest(dispatcher) {
-        val orgs = FakeOrgs { minLon, _, _, _, _ ->
-            if (minLon == 19.83) {
-                delay(5_000)
-                OrgBboxResult.Ok(listOf(OrgPin("old", "Old", "hospital", 19.84, 45.25)))
-            } else {
-                OrgBboxResult.Ok(listOf(OrgPin("new", "New", "hospital", 19.85, 45.26)))
-            }
-        }
+        val orgs = FakeOrgs(
+            bboxFn = { minLon, _, _, _, _ ->
+                if (minLon == 19.83) {
+                    delay(5_000)
+                    OrgBboxResult.Ok(listOf(OrgPin("old", "Old", "hospital", 19.84, 45.25)))
+                } else {
+                    OrgBboxResult.Ok(listOf(OrgPin("new", "New", "hospital", 19.85, 45.26)))
+                }
+            },
+        )
         val vm = MapViewModel(FakeBuildings(), orgs, FakeSearch(), FakeHistory())
         vm.onCameraIdle(45.255, 19.845, 16.0, 19.83, 45.24, 19.86, 45.26)
         advanceTimeBy(OrgPinLimits.debounceMs(16.0))
         vm.onCameraIdle(45.255, 19.845, 16.0, 19.84, 45.24, 19.87, 45.26)
         advanceTimeBy(OrgPinLimits.debounceMs(16.0))
         advanceUntilIdle()
-        assertTrue(vm.state.value.orgPinsJson!!.contains("\"id\":\"new\""))
-        assertFalse(vm.state.value.orgPinsJson!!.contains("\"id\":\"old\""))
+        assertTrue(vm.state.value.overlay.orgPins.any { it.pin.id == "new" })
+        assertFalse(vm.state.value.overlay.orgPins.any { it.pin.id == "old" })
     }
 
     @Test
     fun searchModeHidesBrowseFetch() = runTest(dispatcher) {
         val orgs = FakeOrgs()
         val hits = listOf(orgHit("1"), orgHit("2"), orgHit("3"))
-        val vm = MapViewModel(FakeBuildings(), orgs, FakeSearch { SearchResult.Ok(SearchResponse("apotek", hits, 1)) }, FakeHistory())
+        val vm = MapViewModel(
+            FakeBuildings(),
+            orgs,
+            FakeSearch { _, _, _ -> SearchResult.Ok(SearchResponse("apotek", hits, 1)) },
+            FakeHistory(),
+        )
         vm.onQueryChange("apotek")
         advanceTimeBy(MapDefaults.SEARCH_DEBOUNCE_MS)
         advanceUntilIdle()
@@ -168,45 +185,7 @@ class SearchMultiLogicTest {
         advanceTimeBy(400)
         advanceUntilIdle()
         assertEquals(before, orgs.bboxCalls.size)
-        assertEquals(MapPinMode.SearchMulti, vm.state.value.pinMode)
-    }
-
-    private class FakeSearch(
-        private val handler: suspend () -> SearchResult = {
-            SearchResult.Ok(SearchResponse("q", emptyList(), 1))
-        },
-    ) : SearchRepository {
-        override suspend fun search(q: String, lat: Double, lon: Double, limit: Int) = handler()
-    }
-
-    private class FakeHistory : SearchHistoryStore {
-        override suspend fun recent() = emptyList<SearchHistoryEntity>()
-        override suspend fun save(query: String, hitId: String?, label: String?, kind: String?, categorySlug: String?) = Unit
-    }
-
-    private class FakeBuildings : BuildingRepository {
-        override suspend fun at(lon: Double, lat: Double) = BuildingAtResult.NotFound
-        override suspend fun byId(id: String) = BuildingDetailResult.NotFound
-    }
-
-    private class FakeOrgs(
-        private val bboxFn: suspend (Double, Double, Double, Double, Int) -> OrgBboxResult = { _, _, _, _, _ ->
-            OrgBboxResult.Ok(emptyList())
-        },
-    ) : OrgRepository {
-        data class BboxCall(val minLon: Double, val limit: Int)
-        val bboxCalls = mutableListOf<BboxCall>()
-        override suspend fun byId(id: String) = OrgDetailResult.Network
-        override suspend fun inBbox(
-            minLon: Double,
-            minLat: Double,
-            maxLon: Double,
-            maxLat: Double,
-            limit: Int,
-        ): OrgBboxResult {
-            bboxCalls += BboxCall(minLon, limit)
-            return bboxFn(minLon, minLat, maxLon, maxLat, limit)
-        }
+        assertEquals(MapPinMode.SearchMulti, vm.state.value.overlay.pinMode)
     }
 }
 

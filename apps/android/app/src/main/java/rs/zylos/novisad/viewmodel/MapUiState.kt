@@ -1,12 +1,14 @@
 package rs.zylos.novisad.viewmodel
 
 import rs.zylos.novisad.data.api.BuildingDetailResponse
+import rs.zylos.novisad.data.api.BuildingGeometry
 import rs.zylos.novisad.data.api.LonLat
 import rs.zylos.novisad.data.api.OrgDetailResponse
 import rs.zylos.novisad.data.api.RouteItinerary
 import rs.zylos.novisad.data.api.SearchHit
 import rs.zylos.novisad.data.local.SearchHistoryEntity
 import rs.zylos.novisad.map.MapDefaults
+import rs.zylos.novisad.map.RankedOrgPin
 import rs.zylos.novisad.ui.CategoryLabels
 
 enum class SheetMode {
@@ -58,72 +60,93 @@ data class BoundsTarget(
     val topHalf: Boolean = false,
 )
 
-data class MapUiState(
-    val mode: SheetMode = SheetMode.Idle,
-    val pinMode: MapPinMode = MapPinMode.Browse,
-    val bottomTab: BottomTab = BottomTab.Search,
-    val routeMode: MapRouteMode = MapRouteMode.Idle,
-    val routeFrom: RoutePoint? = null,
-    val routeTo: RoutePoint? = null,
-    val routePickField: RouteField? = null,
-    val routeSearchField: RouteField? = null,
-    val routeLoading: Boolean = false,
-    val routeError: RouteUiError? = null,
-    val routeItineraries: List<RouteItinerary> = emptyList(),
-    val activeItineraryIndex: Int = 0,
-    val routeWalkJson: String? = null,
-    val routeTransitJson: String? = null,
-    val routeLabelsJson: String? = null,
-    val routeFromJson: String? = null,
-    val routeToJson: String? = null,
-    val routeFieldFocus: RouteField? = null,
-    val routeFromQuery: String = "",
-    val routeToQuery: String = "",
-    val routeHits: List<SearchHit> = emptyList(),
-    val routeSearchLoading: Boolean = false,
-    val gpsEnabled: Boolean = false,
-    val building: BuildingDetailResponse? = null,
-    val org: OrgDetailResponse? = null,
-    val peek: PeekInfo? = null,
-    val highlightJson: String? = null,
-    val markerJson: String? = null,
-    val orgPinsJson: String? = null,
-    val searchPinsJson: String? = null,
-    val camera: CameraTarget? = null,
-    val bounds: BoundsTarget? = null,
+data class SearchUiState(
     val query: String = "",
     val hits: List<SearchHit> = emptyList(),
     val history: List<SearchHistoryEntity> = emptyList(),
-    val searchLoading: Boolean = false,
-    val searchError: SearchUiError? = null,
-    val searchFocused: Boolean = false,
+    val loading: Boolean = false,
+    val error: SearchUiError? = null,
+    val focused: Boolean = false,
     val selectedHit: SearchHit? = null,
+)
+
+data class SheetUiState(
+    val mode: SheetMode = SheetMode.Idle,
+    val building: BuildingDetailResponse? = null,
+    val org: OrgDetailResponse? = null,
+    val peek: PeekInfo? = null,
+)
+
+data class RouteUiState(
+    val bottomTab: BottomTab = BottomTab.Search,
+    val mode: MapRouteMode = MapRouteMode.Idle,
+    val from: RoutePoint? = null,
+    val to: RoutePoint? = null,
+    val pickField: RouteField? = null,
+    val searchField: RouteField? = null,
+    val fieldFocus: RouteField? = null,
+    val loading: Boolean = false,
+    val error: RouteUiError? = null,
+    val itineraries: List<RouteItinerary> = emptyList(),
+    val activeItineraryIndex: Int = 0,
+    val fromQuery: String = "",
+    val toQuery: String = "",
+    val hits: List<SearchHit> = emptyList(),
+    val searchLoading: Boolean = false,
+    val gpsEnabled: Boolean = false,
+) {
+    val inputField: RouteField?
+        get() = fieldFocus ?: searchField
+
+    val canBuild: Boolean
+        get() = RouteLogic.bothPointsReady(from, to)
+
+    val activeItinerary: RouteItinerary?
+        get() = itineraries.getOrNull(activeItineraryIndex)
+}
+
+data class OverlayUiState(
+    val pinMode: MapPinMode = MapPinMode.Browse,
+    val highlight: BuildingGeometry? = null,
+    val marker: LonLat? = null,
+    val orgPins: List<RankedOrgPin> = emptyList(),
+    val searchPins: List<SearchHit> = emptyList(),
+)
+
+data class MapUiState(
+    val search: SearchUiState = SearchUiState(),
+    val sheet: SheetUiState = SheetUiState(),
+    val route: RouteUiState = RouteUiState(),
+    val overlay: OverlayUiState = OverlayUiState(),
+    val camera: CameraTarget? = null,
+    val bounds: BoundsTarget? = null,
     val message: UserMessage? = null,
     val haptic: Boolean = false,
     val generation: Int = 0,
 ) {
-    val routeInputField: RouteField?
-        get() = routeFieldFocus ?: routeSearchField
-
     val dropdownOpen: Boolean
         get() = when {
-            bottomTab == BottomTab.Route && routeInputField != null -> {
-                val q = if (routeInputField == RouteField.From) routeFromQuery else routeToQuery
+            route.bottomTab == BottomTab.Route && route.inputField != null -> {
+                val q = if (route.inputField == RouteField.From) route.fromQuery else route.toQuery
                 q.length >= MapDefaults.SEARCH_MIN_LENGTH
             }
-            else -> searchFocused && (
-                (query.isEmpty() && history.isNotEmpty()) ||
-                    query.length >= MapDefaults.SEARCH_MIN_LENGTH
+            else -> search.focused && (
+                (search.query.isEmpty() && search.history.isNotEmpty()) ||
+                    search.query.length >= MapDefaults.SEARCH_MIN_LENGTH
                 )
         }
 
-    val canBuildRoute: Boolean
-        get() = RouteLogic.bothPointsReady(routeFrom, routeTo)
+    fun withSearch(block: (SearchUiState) -> SearchUiState) = copy(search = block(search))
+
+    fun withSheet(block: (SheetUiState) -> SheetUiState) = copy(sheet = block(sheet))
+
+    fun withRoute(block: (RouteUiState) -> RouteUiState) = copy(route = block(route))
+
+    fun withOverlay(block: (OverlayUiState) -> OverlayUiState) = copy(overlay = block(overlay))
 }
 
 object SheetLogic {
-    fun title(state: MapUiState, fallback: String): String {
-        val building = state.building
+    fun title(building: BuildingDetailResponse?, fallback: String): String {
         return building?.addresses?.firstOrNull()?.label
             ?: building?.name
             ?: fallback
@@ -133,21 +156,20 @@ object SheetLogic {
         return CategoryLabels.label(org.category_slug, org.category_name) ?: ""
     }
 
-    fun buildingSubtitleCount(state: MapUiState): Int {
-        return state.building?.organizations?.size ?: 0
+    fun buildingSubtitleCount(building: BuildingDetailResponse?): Int {
+        return building?.organizations?.size ?: 0
     }
 
     fun reduceClose(state: MapUiState): MapUiState {
         return state.copy(
-            mode = SheetMode.Idle,
-            pinMode = MapPinMode.Browse,
-            building = null,
-            org = null,
-            peek = null,
-            highlightJson = null,
-            markerJson = null,
-            searchPinsJson = null,
-            selectedHit = null,
+            sheet = SheetUiState(),
+            overlay = state.overlay.copy(
+                pinMode = MapPinMode.Browse,
+                highlight = null,
+                marker = null,
+                searchPins = emptyList(),
+            ),
+            search = state.search.copy(selectedHit = null),
             bounds = null,
             message = null,
             haptic = false,
@@ -155,13 +177,15 @@ object SheetLogic {
     }
 
     fun reduceBackToBuilding(state: MapUiState): MapUiState {
-        if (state.building == null) {
+        if (state.sheet.building == null) {
             return reduceClose(state)
         }
         return state.copy(
-            mode = SheetMode.Building,
-            org = null,
-            peek = null,
+            sheet = state.sheet.copy(
+                mode = SheetMode.Building,
+                org = null,
+                peek = null,
+            ),
             message = null,
             haptic = false,
         )
@@ -169,13 +193,9 @@ object SheetLogic {
 
     fun reduceNotFound(generation: Int, previous: MapUiState = MapUiState()): MapUiState {
         return previous.copy(
-            mode = SheetMode.Idle,
-            building = null,
-            org = null,
-            peek = null,
-            highlightJson = null,
-            markerJson = null,
-            selectedHit = null,
+            sheet = SheetUiState(),
+            overlay = previous.overlay.copy(highlight = null, marker = null),
+            search = previous.search.copy(selectedHit = null),
             message = UserMessage.NotFound,
             haptic = true,
             generation = generation,
@@ -184,13 +204,9 @@ object SheetLogic {
 
     fun reduceOutsideCity(generation: Int, previous: MapUiState = MapUiState()): MapUiState {
         return previous.copy(
-            mode = SheetMode.Idle,
-            building = null,
-            org = null,
-            peek = null,
-            highlightJson = null,
-            markerJson = null,
-            selectedHit = null,
+            sheet = SheetUiState(),
+            overlay = previous.overlay.copy(highlight = null, marker = null),
+            search = previous.search.copy(selectedHit = null),
             message = UserMessage.OutsideCity,
             haptic = false,
             generation = generation,
@@ -199,13 +215,13 @@ object SheetLogic {
 
     fun reduceNetwork(generation: Int, previous: MapUiState): MapUiState {
         val mode = when {
-            previous.building != null && previous.org != null -> SheetMode.Organization
-            previous.building != null -> SheetMode.Building
-            previous.peek != null -> SheetMode.Peek
+            previous.sheet.building != null && previous.sheet.org != null -> SheetMode.Organization
+            previous.sheet.building != null -> SheetMode.Building
+            previous.sheet.peek != null -> SheetMode.Peek
             else -> SheetMode.Idle
         }
         return previous.copy(
-            mode = mode,
+            sheet = previous.sheet.copy(mode = mode),
             message = UserMessage.Network,
             haptic = false,
             generation = generation,

@@ -21,14 +21,11 @@ import rs.zylos.novisad.data.api.RouteLineString
 import rs.zylos.novisad.data.api.RouteResponse
 import rs.zylos.novisad.data.api.SearchHit
 import rs.zylos.novisad.data.api.SearchKind
-import rs.zylos.novisad.data.repository.BuildingAtResult
-import rs.zylos.novisad.data.repository.BuildingDetailResult
-import rs.zylos.novisad.data.repository.BuildingRepository
-import rs.zylos.novisad.data.repository.OrgBboxResult
-import rs.zylos.novisad.data.repository.OrgDetailResult
-import rs.zylos.novisad.data.repository.OrgRepository
-import rs.zylos.novisad.data.repository.RouteRepository
 import rs.zylos.novisad.data.repository.RouteResult
+import rs.zylos.novisad.testing.FakeBuildings
+import rs.zylos.novisad.testing.FakeOrgs
+import rs.zylos.novisad.testing.FakeRoutes
+import rs.zylos.novisad.testing.fakeNetwork
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RouteModeTest {
@@ -54,16 +51,16 @@ class RouteModeTest {
                 RouteResult.Ok(sampleResponse("fast"))
             }
         }
-        val vm = MapViewModel(IdleBuildings, IdleOrgs, routes = routes)
+        val vm = MapViewModel(FakeBuildings(), FakeOrgs(), routes = routes)
         vm.onMapPicked(RouteField.From, 19.845, 45.255, "A")
         vm.onMapPicked(RouteField.To, 19.840, 45.238, "B")
-        vm.onBuildRoute(online = true)
+        vm.onBuildRoute()
         vm.onMapPicked(RouteField.From, 19.862, 45.252, "C")
-        vm.onBuildRoute(online = true)
+        vm.onBuildRoute()
         advanceUntilIdle()
-        assertEquals(MapRouteMode.Result, vm.state.value.routeMode)
-        assertTrue(vm.state.value.routeWalkJson!!.contains("FeatureCollection"))
-        assertEquals("C", vm.state.value.routeFrom?.label)
+        assertEquals(MapRouteMode.Result, vm.state.value.route.mode)
+        assertEquals(1, vm.state.value.route.itineraries.size)
+        assertEquals("C", vm.state.value.route.from?.label)
     }
 
     @Test
@@ -73,18 +70,18 @@ class RouteModeTest {
             calls += 1
             RouteResult.Ok(sampleResponse("n$calls"))
         }
-        val vm = MapViewModel(IdleBuildings, IdleOrgs, routes = routes)
+        val vm = MapViewModel(FakeBuildings(), FakeOrgs(), routes = routes)
         vm.onMapPicked(RouteField.From, 19.845, 45.255, "A")
         vm.onMapPicked(RouteField.To, 19.840, 45.238, "B")
-        vm.onBuildRoute(online = true)
+        vm.onBuildRoute()
         advanceUntilIdle()
         assertEquals(1, calls)
-        vm.onSwapRoute(online = true)
+        vm.onSwapRoute()
         advanceUntilIdle()
         assertEquals(2, calls)
-        assertEquals("B", vm.state.value.routeFrom?.label)
-        assertEquals("A", vm.state.value.routeTo?.label)
-        assertEquals(MapRouteMode.Result, vm.state.value.routeMode)
+        assertEquals("B", vm.state.value.route.from?.label)
+        assertEquals("A", vm.state.value.route.to?.label)
+        assertEquals(MapRouteMode.Result, vm.state.value.route.mode)
     }
 
     @Test
@@ -94,72 +91,54 @@ class RouteModeTest {
             calls += 1
             RouteResult.Ok(sampleResponse("x"))
         }
-        val vm = MapViewModel(IdleBuildings, IdleOrgs, routes = routes)
+        val vm = MapViewModel(FakeBuildings(), FakeOrgs(), routes = routes, network = fakeNetwork(false))
         vm.onMapPicked(RouteField.From, 19.845, 45.255, "A")
         vm.onMapPicked(RouteField.To, 19.840, 45.238, "B")
-        vm.onBuildRoute(online = false)
+        vm.onBuildRoute()
         advanceUntilIdle()
         assertEquals(0, calls)
-        assertEquals(RouteUiError.Offline, vm.state.value.routeError)
-        assertEquals(MapRouteMode.Planning, vm.state.value.routeMode)
+        assertEquals(RouteUiError.Offline, vm.state.value.route.error)
+        assertEquals(MapRouteMode.Planning, vm.state.value.route.mode)
     }
 
     @Test
     fun selectRouteHitUsesSearchFieldAfterFocusLost() = runTest(dispatcher) {
-        val vm = MapViewModel(IdleBuildings, IdleOrgs)
+        val vm = MapViewModel(FakeBuildings(), FakeOrgs())
         vm.onRouteFieldFocus(RouteField.From)
         vm.onRouteQueryChange(RouteField.From, "Trg slobode")
         vm.onRouteFieldFocus(null)
         vm.onSelectRouteHit(sampleHit("Trg slobode"))
-        assertEquals("Trg slobode", vm.state.value.routeFrom?.label)
-        assertNull(vm.state.value.routeTo)
+        assertEquals("Trg slobode", vm.state.value.route.from?.label)
+        assertNull(vm.state.value.route.to)
     }
 
     @Test
     fun mapPickUsesPickFieldAfterFocusLost() = runTest(dispatcher) {
-        val vm = MapViewModel(IdleBuildings, IdleOrgs)
+        val vm = MapViewModel(FakeBuildings(), FakeOrgs())
         vm.onRouteFieldFocus(RouteField.From)
         vm.onNaKartu(RouteField.From)
         vm.onRouteFieldFocus(RouteField.To)
         vm.onMapClick(19.845, 45.255)
-        assertEquals("45.25500, 19.84500", vm.state.value.routeFrom?.label)
-        assertNull(vm.state.value.routeTo)
+        assertEquals("45.25500, 19.84500", vm.state.value.route.from?.label)
+        assertNull(vm.state.value.route.to)
     }
 
     @Test
     fun clearRouteReturnsIdleAndClearsLayers() = runTest(dispatcher) {
-        val vm = MapViewModel(IdleBuildings, IdleOrgs, routes = FakeRoutes { _, _ -> RouteResult.Ok(sampleResponse("x")) })
+        val vm = MapViewModel(
+            FakeBuildings(),
+            FakeOrgs(),
+            routes = FakeRoutes { _, _ -> RouteResult.Ok(sampleResponse("x")) },
+        )
         vm.onMapPicked(RouteField.From, 19.845, 45.255, "A")
         vm.onMapPicked(RouteField.To, 19.840, 45.238, "B")
-        vm.onBuildRoute(online = true)
+        vm.onBuildRoute()
         advanceUntilIdle()
         vm.onClearRoute()
-        assertEquals(MapRouteMode.Idle, vm.state.value.routeMode)
-        assertEquals(BottomTab.Search, vm.state.value.bottomTab)
-        assertNull(vm.state.value.routeWalkJson)
-        assertNull(vm.state.value.routeTransitJson)
-    }
-
-    private class FakeRoutes(
-        private val fn: suspend (LonLat, LonLat) -> RouteResult,
-    ) : RouteRepository {
-        override suspend fun planTransit(from: LonLat, to: LonLat) = fn(from, to)
-    }
-
-    private object IdleBuildings : BuildingRepository {
-        override suspend fun at(lon: Double, lat: Double) = BuildingAtResult.NotFound
-        override suspend fun byId(id: String) = BuildingDetailResult.NotFound
-    }
-
-    private object IdleOrgs : OrgRepository {
-        override suspend fun byId(id: String) = OrgDetailResult.Network
-        override suspend fun inBbox(
-            minLon: Double,
-            minLat: Double,
-            maxLon: Double,
-            maxLat: Double,
-            limit: Int,
-        ) = OrgBboxResult.Ok(emptyList())
+        assertEquals(MapRouteMode.Idle, vm.state.value.route.mode)
+        assertEquals(BottomTab.Search, vm.state.value.route.bottomTab)
+        assertTrue(vm.state.value.route.itineraries.isEmpty())
+        assertNull(vm.state.value.route.activeItinerary)
     }
 
     private fun sampleResponse(tag: String) = RouteResponse(

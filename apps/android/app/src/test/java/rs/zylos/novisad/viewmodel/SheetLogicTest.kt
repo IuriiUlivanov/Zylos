@@ -15,21 +15,21 @@ class SheetLogicTest {
     @Test
     fun titleUsesFirstAddressThenNameThenFallback() {
         val withAddress = sampleBuilding(addresses = listOf(sampleAddress("Bulevar 12")))
-        assertEquals("Bulevar 12", SheetLogic.title(MapUiState(building = withAddress), "Zgrada"))
+        assertEquals("Bulevar 12", SheetLogic.title(withAddress, "Zgrada"))
 
         val named = sampleBuilding(name = "Big Fashion", addresses = emptyList())
-        assertEquals("Big Fashion", SheetLogic.title(MapUiState(building = named), "Zgrada"))
+        assertEquals("Big Fashion", SheetLogic.title(named, "Zgrada"))
 
         val empty = sampleBuilding(name = null, addresses = emptyList())
-        assertEquals("Zgrada", SheetLogic.title(MapUiState(building = empty), "Zgrada"))
+        assertEquals("Zgrada", SheetLogic.title(empty, "Zgrada"))
     }
 
     @Test
     fun notFoundClearsSheetAndAsksHaptic() {
         val next = SheetLogic.reduceNotFound(3)
-        assertEquals(SheetMode.Idle, next.mode)
-        assertNull(next.building)
-        assertNull(next.highlightJson)
+        assertEquals(SheetMode.Idle, next.sheet.mode)
+        assertNull(next.sheet.building)
+        assertNull(next.overlay.highlight)
         assertEquals(UserMessage.NotFound, next.message)
         assertTrue(next.haptic)
         assertEquals(3, next.generation)
@@ -40,25 +40,24 @@ class SheetLogicTest {
         val next = SheetLogic.reduceOutsideCity(1)
         assertEquals(UserMessage.OutsideCity, next.message)
         assertEquals(false, next.haptic)
-        assertEquals(SheetMode.Idle, next.mode)
+        assertEquals(SheetMode.Idle, next.sheet.mode)
     }
 
     @Test
     fun backFromOrgKeepsBuildingAndHighlight() {
         val building = sampleBuilding()
         val org = sampleOrg()
+        val geometry = building.geometry
         val current = MapUiState(
-            mode = SheetMode.Organization,
-            building = building,
-            org = org,
-            highlightJson = "{\"type\":\"FeatureCollection\",\"features\":[]}",
+            sheet = SheetUiState(mode = SheetMode.Organization, building = building, org = org),
+            overlay = OverlayUiState(highlight = geometry),
             generation = 4,
         )
         val next = SheetLogic.reduceBackToBuilding(current)
-        assertEquals(SheetMode.Building, next.mode)
-        assertEquals(building.id, next.building?.id)
-        assertNull(next.org)
-        assertEquals(current.highlightJson, next.highlightJson)
+        assertEquals(SheetMode.Building, next.sheet.mode)
+        assertEquals(building.id, next.sheet.building?.id)
+        assertNull(next.sheet.org)
+        assertEquals(current.overlay.highlight, next.overlay.highlight)
     }
 
     @Test
@@ -72,24 +71,26 @@ class SheetLogicTest {
     @Test
     fun closeClearsHighlight() {
         val current = MapUiState(
-            mode = SheetMode.Building,
-            building = sampleBuilding(),
-            highlightJson = "{}",
+            sheet = SheetUiState(mode = SheetMode.Building, building = sampleBuilding()),
+            overlay = OverlayUiState(highlight = sampleBuilding().geometry),
             generation = 2,
         )
         val next = SheetLogic.reduceClose(current)
-        assertEquals(SheetMode.Idle, next.mode)
-        assertNull(next.building)
-        assertNull(next.highlightJson)
+        assertEquals(SheetMode.Idle, next.sheet.mode)
+        assertNull(next.sheet.building)
+        assertNull(next.overlay.highlight)
     }
 
     @Test
     fun networkKeepsPreviousBuildingSheet() {
-        val current = MapUiState(mode = SheetMode.Loading, building = sampleBuilding(), generation = 1)
+        val current = MapUiState(
+            sheet = SheetUiState(mode = SheetMode.Loading, building = sampleBuilding()),
+            generation = 1,
+        )
         val next = SheetLogic.reduceNetwork(2, current)
-        assertEquals(SheetMode.Building, next.mode)
+        assertEquals(SheetMode.Building, next.sheet.mode)
         assertEquals(UserMessage.Network, next.message)
-        assertEquals(sampleBuilding().id, next.building?.id)
+        assertEquals(sampleBuilding().id, next.sheet.building?.id)
     }
 
     private fun sampleAddress(label: String) = BuildingAddress(

@@ -32,14 +32,12 @@ import rs.zylos.novisad.data.repository.RouteRepository
 import rs.zylos.novisad.data.repository.RouteResult
 import rs.zylos.novisad.data.repository.SearchRepository
 import rs.zylos.novisad.data.repository.SearchResult
-import rs.zylos.novisad.map.BuildingHighlight
 import rs.zylos.novisad.map.MapBbox
 import rs.zylos.novisad.map.MapDefaults
 import rs.zylos.novisad.map.OrgPinLimits
 import rs.zylos.novisad.map.OrgPinLogic
-import rs.zylos.novisad.map.OrgPins
-import rs.zylos.novisad.map.SearchMarker
-import rs.zylos.novisad.map.SearchPins
+import rs.zylos.novisad.platform.LocationProvider
+import rs.zylos.novisad.platform.NetworkMonitor
 
 class MapViewModel(
     private val buildings: BuildingRepository,
@@ -47,6 +45,8 @@ class MapViewModel(
     private val search: SearchRepository = IdleSearch,
     private val history: SearchHistoryStore = IdleHistory,
     private val routes: RouteRepository = IdleRoutes,
+    private val network: NetworkMonitor = NetworkMonitor { true },
+    private val location: LocationProvider = IdleLocation,
 ) : ViewModel() {
     private val _state = MutableStateFlow(MapUiState())
     val state: StateFlow<MapUiState> = _state.asStateFlow()
@@ -69,8 +69,9 @@ class MapViewModel(
     init {
         viewModelScope.launch {
             val rows = history.recent()
-            _state.value = _state.value.copy(history = rows)
+            _state.value = _state.value.withSearch { it.copy(history = rows) }
         }
+        refreshGpsAvailability()
     }
 
     fun onCameraIdle(
@@ -92,31 +93,34 @@ class MapViewModel(
     }
 
     fun onSearchFocusChanged(focused: Boolean) {
-        _state.value = _state.value.copy(searchFocused = focused)
+        _state.value = _state.value.withSearch { it.copy(focused = focused) }
     }
 
     fun onQueryChange(text: String) {
         searchJob?.cancel()
-        _state.value = _state.value.copy(
-            query = text,
-            searchError = null,
-            message = null,
-            haptic = false,
-        )
+        _state.value = _state.value
+            .withSearch { it.copy(query = text, error = null) }
+            .copy(message = null, haptic = false)
         if (!SearchLogic.shouldRequest(text)) {
             searchGeneration += 1
-            val leavingMulti = _state.value.pinMode == MapPinMode.SearchMulti
-            _state.value = _state.value.copy(
-                hits = emptyList(),
-                searchLoading = false,
-                pinMode = if (leavingMulti) MapPinMode.Browse else _state.value.pinMode,
-                searchPinsJson = if (leavingMulti) null else _state.value.searchPinsJson,
-                mode = if (leavingMulti && _state.value.mode == SheetMode.SearchList) {
-                    SheetMode.Idle
-                } else {
-                    _state.value.mode
-                },
-            )
+            val leavingMulti = _state.value.overlay.pinMode == MapPinMode.SearchMulti
+            _state.value = _state.value
+                .withSearch { it.copy(hits = emptyList(), loading = false) }
+                .withOverlay { overlay ->
+                    overlay.copy(
+                        pinMode = if (leavingMulti) MapPinMode.Browse else overlay.pinMode,
+                        searchPins = if (leavingMulti) emptyList() else overlay.searchPins,
+                    )
+                }
+                .withSheet { sheet ->
+                    sheet.copy(
+                        mode = if (leavingMulti && sheet.mode == SheetMode.SearchList) {
+                            SheetMode.Idle
+                        } else {
+                            sheet.mode
+                        },
+                    )
+                }
             if (leavingMulti) {
                 scheduleOrgPins()
             }
@@ -125,44 +129,44 @@ class MapViewModel(
         searchJob = viewModelScope.launch {
             delay(MapDefaults.SEARCH_DEBOUNCE_MS)
             val request = ++searchGeneration
-            _state.value = _state.value.copy(searchLoading = true, searchError = null)
+            _state.value = _state.value.withSearch { it.copy(loading = true, error = null) }
             when (val result = search.search(text, cameraLat, cameraLon)) {
                 is SearchResult.Ok -> {
                     if (request != searchGeneration) return@launch
                     val empty = result.body.hits.isEmpty()
                     val eligible = SearchLogic.isMultiEligible(result.body.hits)
-                    _state.value = _state.value.copy(
-                        hits = result.body.hits,
-                        searchLoading = false,
-                        searchError = if (empty) SearchUiError.Empty else null,
-                    )
-                    if (eligible && _state.value.pinMode != MapPinMode.SearchSingle) {
-                        enterSearchMulti(result.body.hits)
-                    } else if (!eligible && _state.value.pinMode == MapPinMode.SearchMulti) {
-                        _state.value = _state.value.copy(
-                            pinMode = MapPinMode.Browse,
-                            searchPinsJson = null,
-                            mode = if (_state.value.mode == SheetMode.SearchList) SheetMode.Idle else _state.value.mode,
-                            bounds = null,
+                    _state.value = _state.value.withSearch {
+                        it.copy(
+                            hits = result.body.hits,
+                            loading = false,
+                            error = if (empty) SearchUiError.Empty else null,
                         )
+                    }
+                    if (eligible && _state.value.overlay.pinMode != MapPinMode.SearchSingle) {
+                        enterSearchMulti(result.body.hits)
+                    } else if (!eligible && _state.value.overlay.pinMode == MapPinMode.SearchMulti) {
+                        _state.value = _state.value
+                            .withOverlay { it.copy(pinMode = MapPinMode.Browse, searchPins = emptyList()) }
+                            .withSheet { sheet ->
+                                sheet.copy(
+                                    mode = if (sheet.mode == SheetMode.SearchList) SheetMode.Idle else sheet.mode,
+                                )
+                            }
+                            .copy(bounds = null)
                         scheduleOrgPins()
                     }
                 }
                 is SearchResult.Unavailable -> {
                     if (request != searchGeneration) return@launch
-                    _state.value = _state.value.copy(
-                        hits = emptyList(),
-                        searchLoading = false,
-                        searchError = SearchUiError.Unavailable,
-                    )
+                    _state.value = _state.value.withSearch {
+                        it.copy(hits = emptyList(), loading = false, error = SearchUiError.Unavailable)
+                    }
                 }
                 is SearchResult.Network -> {
                     if (request != searchGeneration) return@launch
-                    _state.value = _state.value.copy(
-                        hits = emptyList(),
-                        searchLoading = false,
-                        searchError = SearchUiError.Network,
-                    )
+                    _state.value = _state.value.withSearch {
+                        it.copy(hits = emptyList(), loading = false, error = SearchUiError.Network)
+                    }
                 }
             }
         }
@@ -175,17 +179,18 @@ class MapViewModel(
         generation += 1
         pickJob?.cancel()
         _state.value = SheetLogic.reduceClose(
-            _state.value.copy(
-                query = "",
-                hits = emptyList(),
-                searchLoading = false,
-                searchError = null,
-                searchFocused = true,
-                camera = null,
-                bounds = null,
-                generation = generation,
-            ),
-        ).copy(searchFocused = true)
+            _state.value
+                .withSearch {
+                    it.copy(
+                        query = "",
+                        hits = emptyList(),
+                        loading = false,
+                        error = null,
+                        focused = true,
+                    )
+                }
+                .copy(camera = null, bounds = null, generation = generation),
+        ).withSearch { it.copy(focused = true) }
         scheduleOrgPins()
     }
 
@@ -195,61 +200,74 @@ class MapViewModel(
         val request = ++generation
         pickJob?.cancel()
         val zoom = SearchLogic.flyZoom(cameraZoom)
-        val queryToStore = _state.value.query.ifBlank { hit.label }
+        val queryToStore = _state.value.search.query.ifBlank { hit.label }
         pickJob = viewModelScope.launch {
-            _state.value = _state.value.copy(
-                query = hit.label,
-                searchFocused = false,
-                searchLoading = false,
-                searchError = null,
-                selectedHit = hit,
-                pinMode = MapPinMode.SearchSingle,
-                markerJson = SearchMarker.pointJson(hit.lon, hit.lat),
-                searchPinsJson = null,
-                camera = CameraTarget(
-                    lat = hit.lat,
-                    lon = hit.lon,
-                    zoom = zoom,
-                    durationMs = MapDefaults.FLY_DURATION_MS,
-                    nonce = request,
-                    anchorYFromBottom = MapDefaults.SEARCH_FLYTO_ANCHOR_Y,
-                ),
-                bounds = null,
-                mode = SheetMode.Loading,
-                message = null,
-                haptic = false,
-                generation = request,
-            )
+            _state.value = _state.value
+                .withSearch {
+                    it.copy(
+                        query = hit.label,
+                        focused = false,
+                        loading = false,
+                        error = null,
+                        selectedHit = hit,
+                    )
+                }
+                .withOverlay {
+                    it.copy(
+                        pinMode = MapPinMode.SearchSingle,
+                        marker = LonLat(hit.lon, hit.lat),
+                        searchPins = emptyList(),
+                    )
+                }
+                .withSheet { it.copy(mode = SheetMode.Loading) }
+                .copy(
+                    camera = CameraTarget(
+                        lat = hit.lat,
+                        lon = hit.lon,
+                        zoom = zoom,
+                        durationMs = MapDefaults.FLY_DURATION_MS,
+                        nonce = request,
+                        anchorYFromBottom = MapDefaults.SEARCH_FLYTO_ANCHOR_Y,
+                    ),
+                    bounds = null,
+                    message = null,
+                    haptic = false,
+                    generation = request,
+                )
             history.save(queryToStore, hit.id, hit.label, hit.kind.name, hit.category_slug)
             val rows = history.recent()
             if (request != generation) return@launch
-            _state.value = _state.value.copy(history = rows)
+            _state.value = _state.value.withSearch { it.copy(history = rows) }
             openHit(hit, request)
         }
     }
 
     fun onHistoryQuery(query: String) {
         onQueryChange(query)
-        _state.value = _state.value.copy(searchFocused = true)
+        _state.value = _state.value.withSearch { it.copy(focused = true) }
     }
 
     fun onSearchMarkerClick() {
-        val hit = _state.value.selectedHit ?: return
+        val hit = _state.value.search.selectedHit ?: return
         if (_state.value.dropdownOpen) {
             return
         }
+        val sheet = _state.value.sheet
         when {
-            _state.value.building != null -> {
-                _state.value = _state.value.copy(
-                    mode = if (_state.value.org != null) SheetMode.Organization else SheetMode.Building,
-                    message = null,
-                )
+            sheet.building != null -> {
+                _state.value = _state.value
+                    .withSheet {
+                        it.copy(
+                            mode = if (it.org != null) SheetMode.Organization else SheetMode.Building,
+                        )
+                    }
+                    .copy(message = null)
             }
-            _state.value.org != null -> {
-                _state.value = _state.value.copy(mode = SheetMode.Organization, message = null)
+            sheet.org != null -> {
+                _state.value = _state.value.withSheet { it.copy(mode = SheetMode.Organization) }.copy(message = null)
             }
-            _state.value.peek != null -> {
-                _state.value = _state.value.copy(mode = SheetMode.Peek, message = null)
+            sheet.peek != null -> {
+                _state.value = _state.value.withSheet { it.copy(mode = SheetMode.Peek) }.copy(message = null)
             }
             else -> onSelectHit(hit)
         }
@@ -259,12 +277,12 @@ class MapViewModel(
         if (id.isNullOrBlank() || _state.value.dropdownOpen) {
             return
         }
-        val hit = _state.value.hits.firstOrNull { it.id == id } ?: return
+        val hit = _state.value.search.hits.firstOrNull { it.id == id } ?: return
         onSelectHit(hit)
     }
 
     fun onShowAllOnMap() {
-        val hits = _state.value.hits
+        val hits = _state.value.search.hits
         if (hits.isEmpty()) {
             return
         }
@@ -275,44 +293,48 @@ class MapViewModel(
         if (id.isNullOrBlank() || _state.value.dropdownOpen) {
             return
         }
-        val current = _state.value.building
+        val current = _state.value.sheet.building
         if (current != null && current.organizations.none { it.id == id }) {
-            _state.value = _state.value.copy(highlightJson = null)
+            _state.value = _state.value.withOverlay { it.copy(highlight = null) }
         }
         onOrgSelected(id)
     }
 
     fun onMapClick(lon: Double, lat: Double) {
-        if (_state.value.routePickField != null) {
-            onMapPicked(_state.value.routePickField!!, lon, lat)
+        if (_state.value.route.pickField != null) {
+            onMapPicked(_state.value.route.pickField!!, lon, lat)
             return
         }
         if (_state.value.dropdownOpen) {
-            _state.value = _state.value.copy(searchFocused = false, routeFieldFocus = null)
+            _state.value = _state.value
+                .withSearch { it.copy(focused = false) }
+                .withRoute { it.copy(fieldFocus = null) }
             return
         }
-        if (_state.value.routeMode == MapRouteMode.Result ||
-            _state.value.routeMode == MapRouteMode.Planning
+        if (_state.value.route.mode == MapRouteMode.Result ||
+            _state.value.route.mode == MapRouteMode.Planning
         ) {
             return
         }
         val request = ++generation
         pickJob?.cancel()
         pickJob = viewModelScope.launch {
-            _state.value = _state.value.copy(
-                mode = SheetMode.Loading,
-                pinMode = MapPinMode.Browse,
-                org = null,
-                peek = null,
-                markerJson = null,
-                searchPinsJson = null,
-                selectedHit = null,
-                searchFocused = false,
-                bounds = null,
-                message = null,
-                haptic = false,
-                generation = request,
-            )
+            _state.value = _state.value
+                .withSheet { it.copy(mode = SheetMode.Loading, org = null, peek = null) }
+                .withOverlay {
+                    it.copy(
+                        pinMode = MapPinMode.Browse,
+                        marker = null,
+                        searchPins = emptyList(),
+                    )
+                }
+                .withSearch { it.copy(selectedHit = null, focused = false) }
+                .copy(
+                    bounds = null,
+                    message = null,
+                    haptic = false,
+                    generation = request,
+                )
             when (val at = buildings.at(lon, lat)) {
                 is BuildingAtResult.NotFound -> {
                     if (request != generation) return@launch
@@ -330,16 +352,23 @@ class MapViewModel(
                     when (val detail = buildings.byId(at.body.id)) {
                         is BuildingDetailResult.Found -> {
                             if (request != generation) return@launch
-                            _state.value = _state.value.copy(
-                                mode = SheetMode.Building,
-                                building = detail.body,
-                                org = null,
-                                peek = null,
-                                highlightJson = BuildingHighlight.collectionJson(detail.body.geometry),
-                                markerJson = null,
-                                selectedHit = null,
-                                generation = request,
-                            )
+                            _state.value = _state.value
+                                .withSheet {
+                                    it.copy(
+                                        mode = SheetMode.Building,
+                                        building = detail.body,
+                                        org = null,
+                                        peek = null,
+                                    )
+                                }
+                                .withOverlay {
+                                    it.copy(
+                                        highlight = detail.body.geometry,
+                                        marker = null,
+                                    )
+                                }
+                                .withSearch { it.copy(selectedHit = null) }
+                                .copy(generation = request)
                         }
                         is BuildingDetailResult.NotFound -> {
                             if (request != generation) return@launch
@@ -357,31 +386,33 @@ class MapViewModel(
 
     fun onOrgSelected(id: String) {
         val request = ++generation
-        val previousBuilding = _state.value.building
+        val previousBuilding = _state.value.sheet.building
         pickJob?.cancel()
         pickJob = viewModelScope.launch {
-            _state.value = _state.value.copy(
-                mode = if (previousBuilding != null) SheetMode.Building else SheetMode.Loading,
-                message = null,
-                haptic = false,
-                generation = request,
-            )
+            _state.value = _state.value
+                .withSheet {
+                    it.copy(
+                        mode = if (previousBuilding != null) SheetMode.Building else SheetMode.Loading,
+                    )
+                }
+                .copy(message = null, haptic = false, generation = request)
             when (val result = orgs.byId(id)) {
                 is OrgDetailResult.Found -> {
                     if (request != generation) return@launch
                     val org = result.body
                     val building = resolveOrgBuilding(org.building_id, previousBuilding)
                     if (request != generation) return@launch
-                    _state.value = _state.value.copy(
-                        mode = SheetMode.Organization,
-                        org = org,
-                        building = building,
-                        peek = null,
-                        highlightJson = building?.let { BuildingHighlight.collectionJson(it.geometry) },
-                        message = null,
-                        haptic = false,
-                        generation = request,
-                    )
+                    _state.value = _state.value
+                        .withSheet {
+                            it.copy(
+                                mode = SheetMode.Organization,
+                                org = org,
+                                building = building,
+                                peek = null,
+                            )
+                        }
+                        .withOverlay { it.copy(highlight = building?.geometry) }
+                        .copy(message = null, haptic = false, generation = request)
                 }
                 is OrgDetailResult.NotFound, is OrgDetailResult.Network -> {
                     if (request != generation) return@launch
@@ -409,28 +440,30 @@ class MapViewModel(
     }
 
     fun consumeRouteError() {
-        if (_state.value.routeError != null) {
-            _state.value = _state.value.copy(routeError = null)
+        if (_state.value.route.error != null) {
+            _state.value = _state.value.withRoute { it.copy(error = null) }
         }
     }
 
-    fun onGpsAvailability(enabled: Boolean) {
-        _state.value = _state.value.copy(gpsEnabled = enabled)
+    fun refreshGpsAvailability() {
+        _state.value = _state.value.withRoute { it.copy(gpsEnabled = location.isAvailable()) }
     }
 
     fun onSelectTab(tab: BottomTab) {
-        if (_state.value.bottomTab == tab) {
+        if (_state.value.route.bottomTab == tab) {
             return
         }
         if (tab == BottomTab.Search) {
-            _state.value = _state.value.copy(
-                bottomTab = BottomTab.Search,
-                routePickField = null,
-                routeFieldFocus = null,
-                routeSearchField = null,
-                routeHits = emptyList(),
-            )
-            if (_state.value.routeMode == MapRouteMode.Idle) {
+            _state.value = _state.value.withRoute {
+                it.copy(
+                    bottomTab = BottomTab.Search,
+                    pickField = null,
+                    fieldFocus = null,
+                    searchField = null,
+                    hits = emptyList(),
+                )
+            }
+            if (_state.value.route.mode == MapRouteMode.Idle) {
                 scheduleOrgPins()
             }
             return
@@ -438,32 +471,34 @@ class MapViewModel(
         enterRouteTab()
     }
 
-    fun onBuildCta(online: Boolean) {
-        onBuildRoute(online)
+    fun onBuildCta() {
+        onBuildRoute()
     }
 
-    fun onBuildRoute(online: Boolean) {
-        val from = _state.value.routeFrom
-        val to = _state.value.routeTo
+    fun onBuildRoute() {
+        val from = _state.value.route.from
+        val to = _state.value.route.to
         if (from == null || to == null) {
             return
         }
-        if (!online) {
-            _state.value = _state.value.copy(routeLoading = false, routeError = RouteUiError.Offline)
+        if (!network.isOnline()) {
+            _state.value = _state.value.withRoute { it.copy(loading = false, error = RouteUiError.Offline) }
             return
         }
         routeJob?.cancel()
         val request = ++routeGeneration
         routeJob = viewModelScope.launch {
-            _state.value = _state.value.copy(
-                bottomTab = BottomTab.Route,
-                routeMode = MapRouteMode.Planning,
-                routeLoading = true,
-                routeError = null,
-                routePickField = null,
-                routeFieldFocus = null,
-                routeSearchField = null,
-            )
+            _state.value = _state.value.withRoute {
+                it.copy(
+                    bottomTab = BottomTab.Route,
+                    mode = MapRouteMode.Planning,
+                    loading = true,
+                    error = null,
+                    pickField = null,
+                    fieldFocus = null,
+                    searchField = null,
+                )
+            }
             when (val result = routes.planTransit(LonLat(from.lon, from.lat), LonLat(to.lon, to.lat))) {
                 is RouteResult.Ok -> {
                     if (request != routeGeneration) return@launch
@@ -477,19 +512,21 @@ class MapViewModel(
         }
     }
 
-    fun onSwapRoute(online: Boolean) {
-        val from = _state.value.routeFrom
-        val to = _state.value.routeTo
-        val fromQuery = _state.value.routeFromQuery
-        val toQuery = _state.value.routeToQuery
-        _state.value = _state.value.copy(
-            routeFrom = to,
-            routeTo = from,
-            routeFromQuery = toQuery,
-            routeToQuery = fromQuery,
-        )
-        if (_state.value.routeMode == MapRouteMode.Result && to != null && from != null) {
-            onBuildRoute(online)
+    fun onSwapRoute() {
+        val from = _state.value.route.from
+        val to = _state.value.route.to
+        val fromQuery = _state.value.route.fromQuery
+        val toQuery = _state.value.route.toQuery
+        _state.value = _state.value.withRoute {
+            it.copy(
+                from = to,
+                to = from,
+                fromQuery = toQuery,
+                toQuery = fromQuery,
+            )
+        }
+        if (_state.value.route.mode == MapRouteMode.Result && to != null && from != null) {
+            onBuildRoute()
         }
     }
 
@@ -497,29 +534,27 @@ class MapViewModel(
         routeJob?.cancel()
         routeSearchJob?.cancel()
         routeGeneration += 1
-        _state.value = _state.value.copy(
-            bottomTab = BottomTab.Search,
-            routeMode = MapRouteMode.Idle,
-            routeLoading = false,
-            routeError = null,
-            routeItineraries = emptyList(),
-            activeItineraryIndex = 0,
-            routeWalkJson = null,
-            routeTransitJson = null,
-            routeLabelsJson = null,
-            routeFromJson = null,
-            routeToJson = null,
-            routePickField = null,
-            routeFieldFocus = null,
-            routeSearchField = null,
-            routeHits = emptyList(),
-            bounds = null,
-        )
+        _state.value = _state.value
+            .withRoute {
+                it.copy(
+                    bottomTab = BottomTab.Search,
+                    mode = MapRouteMode.Idle,
+                    loading = false,
+                    error = null,
+                    itineraries = emptyList(),
+                    activeItineraryIndex = 0,
+                    pickField = null,
+                    fieldFocus = null,
+                    searchField = null,
+                    hits = emptyList(),
+                )
+            }
+            .copy(bounds = null)
         scheduleOrgPins()
     }
 
     fun onSelectItinerary(index: Int) {
-        val items = _state.value.routeItineraries
+        val items = _state.value.route.itineraries
         if (index !in items.indices) {
             return
         }
@@ -527,52 +562,55 @@ class MapViewModel(
     }
 
     fun onRouteFieldFocus(field: RouteField?) {
-        _state.value = _state.value.copy(
-            routeFieldFocus = field,
-            routeSearchField = field ?: _state.value.routeSearchField,
-            searchFocused = false,
-        )
+        _state.value = _state.value
+            .withRoute {
+                it.copy(
+                    fieldFocus = field,
+                    searchField = field ?: it.searchField,
+                )
+            }
+            .withSearch { it.copy(focused = false) }
     }
 
     fun onRouteQueryChange(field: RouteField, text: String) {
         routeSearchJob?.cancel()
-        _state.value = when (field) {
-            RouteField.From -> _state.value.copy(
-                routeFromQuery = text,
-                routeError = null,
-                routeSearchField = field,
-                routePickField = null,
-            )
-            RouteField.To -> _state.value.copy(
-                routeToQuery = text,
-                routeError = null,
-                routeSearchField = field,
-                routePickField = null,
-            )
+        _state.value = _state.value.withRoute {
+            when (field) {
+                RouteField.From -> it.copy(
+                    fromQuery = text,
+                    error = null,
+                    searchField = field,
+                    pickField = null,
+                )
+                RouteField.To -> it.copy(
+                    toQuery = text,
+                    error = null,
+                    searchField = field,
+                    pickField = null,
+                )
+            }
         }
         if (!SearchLogic.shouldRequest(text)) {
             routeSearchGeneration += 1
-            _state.value = _state.value.copy(routeHits = emptyList(), routeSearchLoading = false)
+            _state.value = _state.value.withRoute { it.copy(hits = emptyList(), searchLoading = false) }
             return
         }
         routeSearchJob = viewModelScope.launch {
             delay(MapDefaults.SEARCH_DEBOUNCE_MS)
             val request = ++routeSearchGeneration
-            _state.value = _state.value.copy(routeSearchLoading = true)
+            _state.value = _state.value.withRoute { it.copy(searchLoading = true) }
             when (val result = search.search(text, cameraLat, cameraLon)) {
                 is SearchResult.Ok -> {
                     if (request != routeSearchGeneration) return@launch
-                    _state.value = _state.value.copy(
-                        routeHits = result.body.hits,
-                        routeSearchLoading = false,
-                    )
+                    _state.value = _state.value.withRoute {
+                        it.copy(hits = result.body.hits, searchLoading = false)
+                    }
                 }
                 is SearchResult.Unavailable, is SearchResult.Network -> {
                     if (request != routeSearchGeneration) return@launch
-                    _state.value = _state.value.copy(
-                        routeHits = emptyList(),
-                        routeSearchLoading = false,
-                    )
+                    _state.value = _state.value.withRoute {
+                        it.copy(hits = emptyList(), searchLoading = false)
+                    }
                 }
             }
         }
@@ -586,13 +624,16 @@ class MapViewModel(
     }
 
     fun onNaKartu(field: RouteField) {
-        _state.value = _state.value.copy(
-            routePickField = field,
-            routeSearchField = field,
-            routeFieldFocus = null,
-            searchFocused = false,
-            routeHits = emptyList(),
-        )
+        _state.value = _state.value
+            .withRoute {
+                it.copy(
+                    pickField = field,
+                    searchField = field,
+                    fieldFocus = null,
+                    hits = emptyList(),
+                )
+            }
+            .withSearch { it.copy(focused = false) }
     }
 
     fun onMapPicked(field: RouteField, lon: Double, lat: Double, label: String = mapPickLabel(lon, lat)) {
@@ -600,48 +641,52 @@ class MapViewModel(
     }
 
     fun onMapLongClick(lon: Double, lat: Double) {
-        if (_state.value.bottomTab != BottomTab.Route && _state.value.routeMode == MapRouteMode.Idle) {
+        if (_state.value.route.bottomTab != BottomTab.Route && _state.value.route.mode == MapRouteMode.Idle) {
             return
         }
         onMapPicked(activeRouteFieldForMap(), lon, lat)
     }
 
-    fun onMyLocation(lon: Double, lat: Double) {
-        assignRoutePoint(RouteField.From, RoutePoint(lon, lat, MY_LOCATION_LABEL))
+    fun onFillMyLocation() {
+        refreshGpsAvailability()
+        val loc = location.lastKnown() ?: return
+        assignRoutePoint(RouteField.From, RoutePoint(loc.lon, loc.lat, MY_LOCATION_LABEL))
     }
 
     private fun enterRouteTab() {
         val dest = selectedDestination()
-        val from = _state.value.routeFrom
-        val nextFrom = from ?: if (_state.value.gpsEnabled) _state.value.routeFrom else from
-        _state.value = _state.value.copy(
-            bottomTab = BottomTab.Route,
-            routeMode = if (_state.value.routeMode == MapRouteMode.Result) MapRouteMode.Result else MapRouteMode.Planning,
-            routeTo = _state.value.routeTo ?: dest,
-            routeToQuery = (_state.value.routeTo ?: dest)?.label ?: _state.value.routeToQuery,
-            routeFrom = nextFrom,
-            routeFromQuery = nextFrom?.label ?: _state.value.routeFromQuery,
-            searchFocused = false,
-            routeFieldFocus = null,
-            routeSearchField = null,
-            routeHits = emptyList(),
-        )
+        val from = _state.value.route.from
+        _state.value = _state.value
+            .withRoute {
+                it.copy(
+                    bottomTab = BottomTab.Route,
+                    mode = if (it.mode == MapRouteMode.Result) MapRouteMode.Result else MapRouteMode.Planning,
+                    to = it.to ?: dest,
+                    toQuery = (it.to ?: dest)?.label ?: it.toQuery,
+                    from = from,
+                    fromQuery = from?.label ?: it.fromQuery,
+                    fieldFocus = null,
+                    searchField = null,
+                    hits = emptyList(),
+                )
+            }
+            .withSearch { it.copy(focused = false) }
     }
 
     private fun selectedDestination(): RoutePoint? {
-        val org = _state.value.org
+        val org = _state.value.sheet.org
         if (org != null) {
             val label = org.address?.label?.takeIf { it.isNotBlank() } ?: org.name
             return RoutePoint(org.location.lon, org.location.lat, label)
         }
-        val building = _state.value.building
+        val building = _state.value.sheet.building
         if (building != null) {
             val label = building.addresses.firstOrNull()?.label
                 ?: building.name
                 ?: building.id
             return RoutePoint(building.centroid.lon, building.centroid.lat, label)
         }
-        val hit = _state.value.selectedHit ?: _state.value.peek?.hit
+        val hit = _state.value.search.selectedHit ?: _state.value.sheet.peek?.hit
         if (hit != null) {
             return RoutePoint(hit.lon, hit.lat, hit.label)
         }
@@ -649,45 +694,48 @@ class MapViewModel(
     }
 
     private fun activeRouteFieldForSearch(): RouteField {
-        return _state.value.routeSearchField
-            ?: _state.value.routeFieldFocus
+        return _state.value.route.searchField
+            ?: _state.value.route.fieldFocus
             ?: RouteField.To
     }
 
     private fun activeRouteFieldForMap(): RouteField {
-        return _state.value.routePickField
-            ?: _state.value.routeFieldFocus
-            ?: _state.value.routeSearchField
+        return _state.value.route.pickField
+            ?: _state.value.route.fieldFocus
+            ?: _state.value.route.searchField
             ?: RouteField.To
     }
 
     private fun assignRoutePoint(field: RouteField, point: RoutePoint) {
-        val wasResult = _state.value.routeMode == MapRouteMode.Result
-        _state.value = when (field) {
-            RouteField.From -> _state.value.copy(
-                routeFrom = point,
-                routeFromQuery = point.label,
-                routePickField = null,
-                routeFieldFocus = null,
-                routeSearchField = null,
-                routeHits = emptyList(),
-                routeMode = if (wasResult) MapRouteMode.Planning else {
-                    if (_state.value.routeMode == MapRouteMode.Idle) MapRouteMode.Planning else _state.value.routeMode
-                },
-                bottomTab = BottomTab.Route,
-            )
-            RouteField.To -> _state.value.copy(
-                routeTo = point,
-                routeToQuery = point.label,
-                routePickField = null,
-                routeFieldFocus = null,
-                routeSearchField = null,
-                routeHits = emptyList(),
-                routeMode = if (wasResult) MapRouteMode.Planning else {
-                    if (_state.value.routeMode == MapRouteMode.Idle) MapRouteMode.Planning else _state.value.routeMode
-                },
-                bottomTab = BottomTab.Route,
-            )
+        val wasResult = _state.value.route.mode == MapRouteMode.Result
+        _state.value = _state.value.withRoute {
+            val nextMode = when {
+                wasResult -> MapRouteMode.Planning
+                it.mode == MapRouteMode.Idle -> MapRouteMode.Planning
+                else -> it.mode
+            }
+            when (field) {
+                RouteField.From -> it.copy(
+                    from = point,
+                    fromQuery = point.label,
+                    pickField = null,
+                    fieldFocus = null,
+                    searchField = null,
+                    hits = emptyList(),
+                    mode = nextMode,
+                    bottomTab = BottomTab.Route,
+                )
+                RouteField.To -> it.copy(
+                    to = point,
+                    toQuery = point.label,
+                    pickField = null,
+                    fieldFocus = null,
+                    searchField = null,
+                    hits = emptyList(),
+                    mode = nextMode,
+                    bottomTab = BottomTab.Route,
+                )
+            }
         }
         if (wasResult) {
             clearRouteLayersOnly()
@@ -697,28 +745,24 @@ class MapViewModel(
     private fun clearRouteLayersOnly() {
         routeJob?.cancel()
         routeGeneration += 1
-        _state.value = _state.value.copy(
-            routeItineraries = emptyList(),
-            activeItineraryIndex = 0,
-            routeWalkJson = null,
-            routeTransitJson = null,
-            routeLabelsJson = null,
-            routeFromJson = null,
-            routeToJson = null,
-            routeLoading = false,
-            bounds = null,
-        )
+        _state.value = _state.value
+            .withRoute {
+                it.copy(
+                    itineraries = emptyList(),
+                    activeItineraryIndex = 0,
+                    loading = false,
+                )
+            }
+            .copy(bounds = null)
     }
 
     private fun failRoute(request: Int, error: RouteUiError) {
         if (request != routeGeneration) {
             return
         }
-        _state.value = _state.value.copy(
-            routeLoading = false,
-            routeError = error,
-            routeMode = MapRouteMode.Planning,
-        )
+        _state.value = _state.value.withRoute {
+            it.copy(loading = false, error = error, mode = MapRouteMode.Planning)
+        }
     }
 
     private fun applyRouteResult(body: rs.zylos.novisad.data.api.RouteResponse, request: Int) {
@@ -727,13 +771,15 @@ class MapViewModel(
             failRoute(request, RouteUiError.NoRoute)
             return
         }
-        _state.value = _state.value.copy(
-            routeMode = MapRouteMode.Result,
-            routeLoading = false,
-            routeError = null,
-            routeItineraries = sorted,
-            bottomTab = BottomTab.Route,
-        )
+        _state.value = _state.value.withRoute {
+            it.copy(
+                mode = MapRouteMode.Result,
+                loading = false,
+                error = null,
+                itineraries = sorted,
+                bottomTab = BottomTab.Route,
+            )
+        }
         applyActiveItinerary(sorted, 0, request)
     }
 
@@ -743,22 +789,18 @@ class MapViewModel(
         nonce: Int,
     ) {
         val itinerary = items.getOrNull(index) ?: return
-        val from = _state.value.routeFrom
-        val to = _state.value.routeTo
-        _state.value = _state.value.copy(
-            activeItineraryIndex = index,
-            routeWalkJson = RouteLogic.walkCollectionJson(itinerary),
-            routeTransitJson = RouteLogic.transitCollectionJson(itinerary),
-            routeLabelsJson = RouteLogic.labelsCollectionJson(itinerary),
-            routeFromJson = from?.let { RouteLogic.pointCollectionJson(it.lon, it.lat) },
-            routeToJson = to?.let { RouteLogic.pointCollectionJson(it.lon, it.lat) },
-            bounds = BoundsTarget(
-                points = RouteLogic.boundsPoints(itinerary, from, to),
-                durationMs = MapDefaults.FLY_DURATION_MS,
-                nonce = nonce,
-                topHalf = true,
-            ),
-        )
+        val from = _state.value.route.from
+        val to = _state.value.route.to
+        _state.value = _state.value
+            .withRoute { it.copy(activeItineraryIndex = index) }
+            .copy(
+                bounds = BoundsTarget(
+                    points = RouteLogic.boundsPoints(itinerary, from, to),
+                    durationMs = MapDefaults.FLY_DURATION_MS,
+                    nonce = nonce,
+                    topHalf = true,
+                ),
+            )
     }
 
     private fun mapPickLabel(lon: Double, lat: Double): String {
@@ -792,47 +834,54 @@ class MapViewModel(
             return
         }
         val request = ++generation
-        _state.value = _state.value.copy(
-            pinMode = MapPinMode.SearchMulti,
-            searchFocused = false,
-            searchLoading = false,
-            selectedHit = null,
-            markerJson = null,
-            searchPinsJson = SearchPins.collectionJson(pins),
-            mode = SheetMode.SearchList,
-            peek = null,
-            org = null,
-            building = null,
-            highlightJson = null,
-            camera = null,
-            bounds = BoundsTarget(
-                points = pins.map { LonLat(it.lon, it.lat) },
-                durationMs = MapDefaults.FLY_DURATION_MS,
-                nonce = request,
-            ),
-            generation = request,
-        )
+        _state.value = _state.value
+            .withOverlay {
+                it.copy(
+                    pinMode = MapPinMode.SearchMulti,
+                    marker = null,
+                    searchPins = pins,
+                    highlight = null,
+                )
+            }
+            .withSearch { it.copy(focused = false, loading = false, selectedHit = null) }
+            .withSheet {
+                it.copy(
+                    mode = SheetMode.SearchList,
+                    peek = null,
+                    org = null,
+                    building = null,
+                )
+            }
+            .copy(
+                camera = null,
+                bounds = BoundsTarget(
+                    points = pins.map { LonLat(it.lon, it.lat) },
+                    durationMs = MapDefaults.FLY_DURATION_MS,
+                    nonce = request,
+                ),
+                generation = request,
+            )
     }
 
     private fun scheduleOrgPins() {
         orgPinsJob?.cancel()
-        if (_state.value.pinMode != MapPinMode.Browse || _state.value.routeMode != MapRouteMode.Idle) {
+        if (_state.value.overlay.pinMode != MapPinMode.Browse || _state.value.route.mode != MapRouteMode.Idle) {
             return
         }
         if (!OrgPinLimits.shouldRequest(cameraZoom)) {
             orgPinsGeneration += 1
-            _state.value = _state.value.copy(orgPinsJson = OrgPins.emptyCollectionJson())
+            _state.value = _state.value.withOverlay { it.copy(orgPins = emptyList()) }
             return
         }
         val bbox = cameraBbox ?: return
         val zoom = cameraZoom
         orgPinsJob = viewModelScope.launch {
             delay(OrgPinLimits.debounceMs(zoom))
-            if (_state.value.pinMode != MapPinMode.Browse) return@launch
-            if (_state.value.routeMode != MapRouteMode.Idle) return@launch
+            if (_state.value.overlay.pinMode != MapPinMode.Browse) return@launch
+            if (_state.value.route.mode != MapRouteMode.Idle) return@launch
             val latest = cameraBbox ?: bbox
             if (!OrgPinLimits.shouldRequest(cameraZoom)) {
-                _state.value = _state.value.copy(orgPinsJson = OrgPins.emptyCollectionJson())
+                _state.value = _state.value.withOverlay { it.copy(orgPins = emptyList()) }
                 return@launch
             }
             val request = ++orgPinsGeneration
@@ -840,10 +889,10 @@ class MapViewModel(
             when (val result = orgs.inBbox(latest.minLon, latest.minLat, latest.maxLon, latest.maxLat, limit)) {
                 is OrgBboxResult.Ok -> {
                     if (request != orgPinsGeneration) return@launch
-                    if (_state.value.pinMode != MapPinMode.Browse) return@launch
-                    if (_state.value.routeMode != MapRouteMode.Idle) return@launch
+                    if (_state.value.overlay.pinMode != MapPinMode.Browse) return@launch
+                    if (_state.value.route.mode != MapRouteMode.Idle) return@launch
                     val visible = OrgPinLogic.visiblePins(result.pins, cameraZoom, latest)
-                    _state.value = _state.value.copy(orgPinsJson = OrgPins.collectionJson(visible))
+                    _state.value = _state.value.withOverlay { it.copy(orgPins = visible) }
                 }
                 is OrgBboxResult.Network -> {
                     if (request != orgPinsGeneration) return@launch
@@ -887,24 +936,30 @@ class MapViewModel(
         if (request != generation) return
         when {
             orgDetail != null -> {
-                _state.value = _state.value.copy(
-                    mode = SheetMode.Organization,
-                    org = orgDetail,
-                    building = buildingDetail,
-                    peek = null,
-                    highlightJson = buildingDetail?.let { BuildingHighlight.collectionJson(it.geometry) },
-                    generation = request,
-                )
+                _state.value = _state.value
+                    .withSheet {
+                        it.copy(
+                            mode = SheetMode.Organization,
+                            org = orgDetail,
+                            building = buildingDetail,
+                            peek = null,
+                        )
+                    }
+                    .withOverlay { it.copy(highlight = buildingDetail?.geometry) }
+                    .copy(generation = request)
             }
             buildingDetail != null -> {
-                _state.value = _state.value.copy(
-                    mode = SheetMode.Building,
-                    building = buildingDetail,
-                    org = null,
-                    peek = null,
-                    highlightJson = BuildingHighlight.collectionJson(buildingDetail.geometry),
-                    generation = request,
-                )
+                _state.value = _state.value
+                    .withSheet {
+                        it.copy(
+                            mode = SheetMode.Building,
+                            building = buildingDetail,
+                            org = null,
+                            peek = null,
+                        )
+                    }
+                    .withOverlay { it.copy(highlight = buildingDetail.geometry) }
+                    .copy(generation = request)
             }
             else -> showPeek(hit, request)
         }
@@ -912,18 +967,23 @@ class MapViewModel(
 
     private fun showPeek(hit: SearchHit, request: Int) {
         if (request != generation) return
-        _state.value = _state.value.copy(
-            mode = SheetMode.Peek,
-            building = if (hit.building_id == null) null else _state.value.building,
-            org = null,
-            peek = PeekInfo(
-                title = hit.label,
-                subtitle = SearchLogic.peekSubtitle(hit, ADDRESS_FALLBACK, ORG_FALLBACK),
-                hit = hit,
-            ),
-            highlightJson = if (hit.building_id == null) null else _state.value.highlightJson,
-            generation = request,
-        )
+        _state.value = _state.value
+            .withSheet {
+                it.copy(
+                    mode = SheetMode.Peek,
+                    building = if (hit.building_id == null) null else it.building,
+                    org = null,
+                    peek = PeekInfo(
+                        title = hit.label,
+                        subtitle = SearchLogic.peekSubtitle(hit, ADDRESS_FALLBACK, ORG_FALLBACK),
+                        hit = hit,
+                    ),
+                )
+            }
+            .withOverlay {
+                it.copy(highlight = if (hit.building_id == null) null else it.highlight)
+            }
+            .copy(generation = request)
     }
 
     companion object {
@@ -945,7 +1005,18 @@ class MapViewModel(
             override suspend fun planTransit(from: LonLat, to: LonLat) = RouteResult.Offline
         }
 
-        fun factory(api: ZylosApi, historyDao: SearchHistoryDao, routeApi: ZylosApi = api): ViewModelProvider.Factory {
+        private object IdleLocation : LocationProvider {
+            override fun isAvailable() = false
+            override fun lastKnown() = null
+        }
+
+        fun factory(
+            api: ZylosApi,
+            historyDao: SearchHistoryDao,
+            routeApi: ZylosApi = api,
+            network: NetworkMonitor,
+            location: LocationProvider,
+        ): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -955,6 +1026,8 @@ class MapViewModel(
                         HttpSearchRepository(api),
                         RoomSearchHistoryStore(historyDao),
                         HttpRouteRepository(routeApi),
+                        network,
+                        location,
                     ) as T
                 }
             }
