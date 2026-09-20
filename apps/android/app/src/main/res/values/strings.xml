@@ -36,4 +36,20 @@
     <string name="prikazi_sve_na_karti">Prikaži sve na karti</string>
     <string name="rezultati_pretrage">Rezultati pretrage</string>
     <string name="rezultati_count">%1$d rezultata</string>
+    <string name="tab_pretraga">Pretraga</string>
+    <string name="tab_ruta">Ruta</string>
+    <string name="ruta_od_hint">Odakle?</string>
+    <string name="ruta_do_hint">Kuda?</string>
+    <string name="ruta_moja_lokacija">Moja lokacija</string>
+    <string name="ruta_na_karti">Na karti</string>
+    <string name="ruta_swap_cd">Zameni Od i Do</string>
+    <string name="ruta_peske">Peške</string>
+    <string name="ruta_prevoz">Prevoz</string>
+    <string name="ruta_napravi">Napravi rutu</string>
+    <string name="ruta_nema">Nije pronađena ruta</string>
+    <string name="ruta_van_grada">Tačke moraju biti u Novom Sadu</string>
+    <string name="ruta_timeout">Ruta trenutno nije dostupna</string>
+    <string name="ruta_offline">Potrebna je mreža za rutu</string>
+    <string name="ruta_sheet_cd">Rezultat rute</string>
+    <string name="ruta_pick_cd">Izaberi tačku na karti</string>
 </resources>

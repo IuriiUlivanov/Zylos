@@ -211,4 +211,66 @@ class ApiDtoContractTest {
         assertEquals(45.255, pins[0].lat, 0.0)
         assertEquals("cafe", pins[1].category_slug)
     }
+
+    @Test
+    fun moshiParsesRouteResponseContract() {
+        val json = """
+            {
+              "mode": "transit",
+              "duration_sec": 1680,
+              "distance_m": 4200,
+              "transfers": 1,
+              "legs": [
+                {
+                  "mode": "walk",
+                  "duration_sec": 360,
+                  "distance_m": 280,
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [[19.845, 45.255], [19.844, 45.254]]
+                  }
+                },
+                {
+                  "mode": "transit",
+                  "duration_sec": 900,
+                  "distance_m": 3200,
+                  "route_short_name": "7A",
+                  "route_color": "E30613",
+                  "from_stop_name": "Trg Slobode",
+                  "to_stop_name": "Liman III",
+                  "headsign": "Liman",
+                  "geometry": {
+                    "type": "LineString",
+                    "coordinates": [[19.844, 45.254], [19.840, 45.238]]
+                  }
+                }
+              ],
+              "itineraries": [{
+                "duration_sec": 1680,
+                "distance_m": 4200,
+                "transfers": 1,
+                "walk_duration_sec": 360,
+                "legs": [{
+                  "mode": "walk",
+                  "duration_sec": 360,
+                  "distance_m": 280,
+                  "geometry": { "type": "LineString", "coordinates": [[19.845, 45.255], [19.844, 45.254]] }
+                }]
+              }]
+            }
+        """.trimIndent()
+        val body = ApiJson.moshi.adapter(RouteResponse::class.java).fromJson(json)!!
+        assertEquals("transit", body.mode)
+        assertEquals(1680, body.duration_sec)
+        assertEquals(4200.0, body.distance_m, 0.0)
+        assertEquals(1, body.transfers)
+        assertEquals(2, body.legs.size)
+        assertEquals("walk", body.legs[0].mode)
+        assertEquals("7A", body.legs[1].route_short_name)
+        assertEquals("E30613", body.legs[1].route_color)
+        assertEquals("LineString", body.legs[0].geometry.type)
+        assertEquals(2, body.legs[0].geometry.coordinates.size)
+        assertEquals(19.845, body.legs[0].geometry.coordinates[0][0], 0.0)
+        assertEquals(1, body.itineraries.size)
+    }
 }

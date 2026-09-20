@@ -2,6 +2,8 @@ package rs.zylos.novisad.data.api
 
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Body
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -36,4 +38,9 @@ interface ZylosApi {
         @Query("lon") lon: Double? = null,
         @Query("kind") kind: String? = null,
     ): Response<SearchResponse>
+
+    @POST("v1/route")
+    suspend fun route(
+        @Body body: RouteRequest,
+    ): Response<RouteResponse>
 }

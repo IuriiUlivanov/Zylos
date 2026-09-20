@@ -12,6 +12,12 @@
 - planetiler maxzoom: 14
 - novi-sad.mbtiles: 5169152 bytes (Android offline, zoom 0–14)
 
+## Stage 14 GTFS / OTP
+
+- Unpack the official JGSP Novi Sad GTFS zip into `data/gtfs/jgsp/` (not in git).
+- Required: `agency.txt`, `routes.txt`, `stops.txt`, `stop_times.txt`, `trips.txt`, `calendar.txt`.
+- OTP graph is built on first `docker compose up otp` (≤ 90 s, R6) and stored in the `otp_graph` volume.
+
 ## Stage 2 PostGIS
 
 - OSM license: ODbL, © OpenStreetMap contributors

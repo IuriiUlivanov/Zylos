@@ -14,11 +14,16 @@ object ApiClient {
         return "$trimmed/"
     }
 
-    fun create(apiUrl: String = BuildConfig.API_URL): ZylosApi {
+    fun create(
+        apiUrl: String = BuildConfig.API_URL,
+        connectTimeoutMs: Long = 8_000,
+        readTimeoutMs: Long = 15_000,
+        callTimeoutMs: Long = 20_000,
+    ): ZylosApi {
         val builder = OkHttpClient.Builder()
-            .connectTimeout(8, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
-            .callTimeout(20, TimeUnit.SECONDS)
+            .connectTimeout(connectTimeoutMs, TimeUnit.MILLISECONDS)
+            .readTimeout(readTimeoutMs, TimeUnit.MILLISECONDS)
+            .callTimeout(callTimeoutMs, TimeUnit.MILLISECONDS)
             .addInterceptor { chain ->
                 chain.proceed(
                     chain.request()
@@ -39,5 +44,15 @@ object ApiClient {
             .addConverterFactory(MoshiConverterFactory.create(ApiJson.moshi))
             .build()
             .create(ZylosApi::class.java)
+    }
+
+    fun createRoute(apiUrl: String = BuildConfig.API_URL): ZylosApi {
+        val timeout = 8_000L
+        return create(
+            apiUrl = apiUrl,
+            connectTimeoutMs = timeout,
+            readTimeoutMs = timeout,
+            callTimeoutMs = timeout,
+        )
     }
 }

@@ -4,6 +4,7 @@ import { config } from "./config.js";
 import { buildingRoutes } from "./routes/buildings.js";
 import { healthRoutes } from "./routes/health.js";
 import { orgRoutes } from "./routes/orgs.js";
+import { routeRoutes } from "./routes/route.js";
 import { searchRoutes } from "./routes/search.js";
 import { SearchUnavailableError } from "./services/meilisearch.js";
 
@@ -41,6 +42,7 @@ async function main(): Promise<void> {
   await app.register(searchRoutes, { prefix: "/v1" });
   await app.register(buildingRoutes, { prefix: "/v1" });
   await app.register(orgRoutes, { prefix: "/v1" });
+  await app.register(routeRoutes, { prefix: "/v1" });
 
   await app.listen({ port: config.port, host: "0.0.0.0" });
 }

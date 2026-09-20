@@ -32,6 +32,12 @@ class MapDefaultsTest {
         assertEquals(15, MapDefaults.SEARCH_MULTI_MAX_PINS)
         assertEquals(3, MapDefaults.SEARCH_MULTI_MIN_HITS)
         assertEquals("style-mobile.json", MapDefaults.STYLE_ASSET)
+        assertEquals(8_000L, MapDefaults.ROUTE_CLIENT_TIMEOUT_MS)
+        assertEquals(250, MapDefaults.ROUTE_SHEET_ANIM_MS)
+        assertEquals(6, MapDefaults.ROUTE_LINE_WIDTH_TRANSIT)
+        assertEquals(4, MapDefaults.ROUTE_LINE_WIDTH_WALK)
+        assertEquals(0.5f, MapDefaults.ROUTE_FIT_TOP_RATIO, 0.0f)
+        assertEquals(56, MapDefaults.BOTTOM_TAB_HEIGHT_DP)
     }
 
     @Test

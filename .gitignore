@@ -8,6 +8,10 @@ data/tmp/
 data/sources/
 data/rgz/*
 !data/rgz/.gitkeep
+data/gtfs/jgsp/*
+!data/gtfs/jgsp/README.md
+!data/gtfs/jgsp/.gitkeep
+data/otp/
 scripts/map-verify/node_modules/
 scripts/node_modules/
 apps/api/node_modules/

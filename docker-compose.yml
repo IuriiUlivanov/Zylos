@@ -71,6 +71,7 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-zylos}:${POSTGRES_PASSWORD:-zylos}@postgis:5432/${POSTGRES_DB:-zylos}
       MEILI_URL: http://meilisearch:7700
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      OTP_URL: http://otp:8080
       PORT: "3000"
     ports:
       - "127.0.0.1:${API_PORT:-3000}:3000"
@@ -82,6 +83,27 @@ services:
       start_period: 20s
     restart: unless-stopped
 
+  otp:
+    build:
+      context: ./infra/otp
+    container_name: otp
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx2g"
+    ports:
+      - "127.0.0.1:${OTP_PORT:-8082}:8080"
+    volumes:
+      - otp_graph:/var/opentripplanner
+      - ./data/osm/novi-sad.osm.pbf:/var/opentripplanner/novi-sad.osm.pbf:ro
+      - ./data/gtfs/jgsp:/gtfs/jgsp:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/otp/actuators/health || curl -fsS http://127.0.0.1:8080/otp/routers/default || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 90s
+    restart: unless-stopped
+
 volumes:
   pgdata:
   meili_data:
+  otp_graph:

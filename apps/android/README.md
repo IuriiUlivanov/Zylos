@@ -1,6 +1,6 @@
 # Zylos Android
 
-Нативный клиент. Текущий этап: [STAGE-13-android-poi.md](../../Docs/STAGE-13-android-poi.md) (поиск — [STAGE-12-android-search.md](../../Docs/STAGE-12-android-search.md), здание — [STAGE-11-android-building.md](../../Docs/STAGE-11-android-building.md), карта — [STAGE-10-android.md](../../Docs/STAGE-10-android.md)). UI/UX — [MOBILE-DESIGN.md](../../Docs/design/MOBILE-DESIGN.md) (ориентир 2GIS). Веб не развиваем. API — существующий Fastify `/v1`.
+Нативный клиент. Текущий этап: [STAGE-14-android-transit.md](../../Docs/STAGE-14-android-transit.md) (org-пины — [STAGE-13-android-poi.md](../../Docs/STAGE-13-android-poi.md), поиск — [STAGE-12-android-search.md](../../Docs/STAGE-12-android-search.md), здание — [STAGE-11-android-building.md](../../Docs/STAGE-11-android-building.md), карта — [STAGE-10-android.md](../../Docs/STAGE-10-android.md)). UI/UX — [MOBILE-DESIGN.md](../../Docs/design/MOBILE-DESIGN.md) (ориентир 2GIS). Веб не развиваем. API — существующий Fastify `/v1`.
 
 ## Сборка
 
@@ -49,7 +49,7 @@ docker compose up -d postgis meilisearch api
 ..\..\scripts\stage12-verify.ps1
 ```
 
-Org-пины по zoom — [STAGE-13-android-poi.md](../../Docs/STAGE-13-android-poi.md), [MOBILE-POI-ZOOM.md](../../Docs/design/MOBILE-POI-ZOOM.md).
+Org-пины по zoom — [STAGE-13-android-poi.md](../../Docs/STAGE-13-android-poi.md), [MOBILE-POI-ZOOM.md](../../Docs/design/MOBILE-POI-ZOOM.md). Маршрут transit — [STAGE-14-android-transit.md](../../Docs/STAGE-14-android-transit.md).
 
 ## Org-пины и Search Multi (STAGE-13)
 
@@ -59,5 +59,17 @@ Browse z15+: `GET /v1/orgs?bbox=` (debounce 300/250/200 ms, limit 40…200). С�
 docker compose up -d postgis meilisearch api
 ..\..\scripts\stage13-verify.ps1
 ```
+
+## Маршрут transit (STAGE-14)
+
+Вкладки **Pretraga | Ruta**. `POST /v1/route` mode=`transit` через OTP2 (JGSP GTFS). Walk — пунктир, автобус — сплошная линия + номер. Timeout клиента 8 с.
+
+```powershell
+# GTFS: распаковать zip в data/gtfs/jgsp/ (agency.txt, routes.txt, …)
+docker compose up -d postgis otp api
+..\..\scripts\stage14-verify.ps1
+```
+
+Телефон в LAN: `docker compose -f docker-compose.yml -f docker-compose.mobile.yml up -d api otp`.
 
 Центр камеры: 19.845, 45.255; zoom 14; pitch ≤ 60°. Атрибуция OSM на карте.

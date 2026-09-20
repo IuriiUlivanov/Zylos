@@ -27,7 +27,7 @@ object OrgPins {
     }
 }
 
-internal object GeoJsonText {
+object GeoJsonText {
     fun escape(value: String): String {
         return buildString(value.length) {
             value.forEach { ch ->

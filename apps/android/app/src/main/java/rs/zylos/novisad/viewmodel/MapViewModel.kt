@@ -23,10 +23,13 @@ import rs.zylos.novisad.data.repository.BuildingDetailResult
 import rs.zylos.novisad.data.repository.BuildingRepository
 import rs.zylos.novisad.data.repository.HttpBuildingRepository
 import rs.zylos.novisad.data.repository.HttpOrgRepository
+import rs.zylos.novisad.data.repository.HttpRouteRepository
 import rs.zylos.novisad.data.repository.HttpSearchRepository
 import rs.zylos.novisad.data.repository.OrgBboxResult
 import rs.zylos.novisad.data.repository.OrgDetailResult
 import rs.zylos.novisad.data.repository.OrgRepository
+import rs.zylos.novisad.data.repository.RouteRepository
+import rs.zylos.novisad.data.repository.RouteResult
 import rs.zylos.novisad.data.repository.SearchRepository
 import rs.zylos.novisad.data.repository.SearchResult
 import rs.zylos.novisad.map.BuildingHighlight
@@ -43,6 +46,7 @@ class MapViewModel(
     private val orgs: OrgRepository,
     private val search: SearchRepository = IdleSearch,
     private val history: SearchHistoryStore = IdleHistory,
+    private val routes: RouteRepository = IdleRoutes,
 ) : ViewModel() {
     private val _state = MutableStateFlow(MapUiState())
     val state: StateFlow<MapUiState> = _state.asStateFlow()
@@ -50,9 +54,13 @@ class MapViewModel(
     private var pickJob: Job? = null
     private var searchJob: Job? = null
     private var orgPinsJob: Job? = null
+    private var routeJob: Job? = null
+    private var routeSearchJob: Job? = null
     private var generation = 0
     private var searchGeneration = 0
     private var orgPinsGeneration = 0
+    private var routeGeneration = 0
+    private var routeSearchGeneration = 0
     private var cameraLat = MapDefaults.LAT
     private var cameraLon = MapDefaults.LON
     private var cameraZoom = MapDefaults.ZOOM
@@ -276,7 +284,16 @@ class MapViewModel(
 
     fun onMapClick(lon: Double, lat: Double) {
         if (_state.value.dropdownOpen) {
-            _state.value = _state.value.copy(searchFocused = false)
+            _state.value = _state.value.copy(searchFocused = false, routeFieldFocus = null)
+            return
+        }
+        if (_state.value.routePickField != null) {
+            onMapPicked(_state.value.routePickField!!, lon, lat)
+            return
+        }
+        if (_state.value.routeMode == MapRouteMode.Result ||
+            _state.value.routeMode == MapRouteMode.Planning
+        ) {
             return
         }
         val request = ++generation
@@ -391,6 +408,343 @@ class MapViewModel(
         }
     }
 
+    fun consumeRouteError() {
+        if (_state.value.routeError != null) {
+            _state.value = _state.value.copy(routeError = null)
+        }
+    }
+
+    fun onGpsAvailability(enabled: Boolean) {
+        _state.value = _state.value.copy(gpsEnabled = enabled)
+    }
+
+    fun onSelectTab(tab: BottomTab) {
+        if (_state.value.bottomTab == tab) {
+            return
+        }
+        if (tab == BottomTab.Search) {
+            _state.value = _state.value.copy(
+                bottomTab = BottomTab.Search,
+                routePickField = null,
+                routeFieldFocus = null,
+                routeHits = emptyList(),
+            )
+            if (_state.value.routeMode == MapRouteMode.Idle) {
+                scheduleOrgPins()
+            }
+            return
+        }
+        enterRouteTab()
+    }
+
+    fun onBuildCta(online: Boolean) {
+        onBuildRoute(online)
+    }
+
+    fun onBuildRoute(online: Boolean) {
+        val from = _state.value.routeFrom
+        val to = _state.value.routeTo
+        if (from == null || to == null) {
+            return
+        }
+        if (!online) {
+            _state.value = _state.value.copy(routeLoading = false, routeError = RouteUiError.Offline)
+            return
+        }
+        routeJob?.cancel()
+        val request = ++routeGeneration
+        routeJob = viewModelScope.launch {
+            _state.value = _state.value.copy(
+                bottomTab = BottomTab.Route,
+                routeMode = MapRouteMode.Planning,
+                routeLoading = true,
+                routeError = null,
+                routePickField = null,
+                routeFieldFocus = null,
+            )
+            when (val result = routes.planTransit(LonLat(from.lon, from.lat), LonLat(to.lon, to.lat))) {
+                is RouteResult.Ok -> {
+                    if (request != routeGeneration) return@launch
+                    applyRouteResult(result.body, request)
+                }
+                RouteResult.OutsideCity -> failRoute(request, RouteUiError.OutsideCity)
+                RouteResult.NoRoute -> failRoute(request, RouteUiError.NoRoute)
+                RouteResult.Timeout -> failRoute(request, RouteUiError.Timeout)
+                RouteResult.Offline, RouteResult.Invalid -> failRoute(request, RouteUiError.Offline)
+            }
+        }
+    }
+
+    fun onSwapRoute(online: Boolean) {
+        val from = _state.value.routeFrom
+        val to = _state.value.routeTo
+        val fromQuery = _state.value.routeFromQuery
+        val toQuery = _state.value.routeToQuery
+        _state.value = _state.value.copy(
+            routeFrom = to,
+            routeTo = from,
+            routeFromQuery = toQuery,
+            routeToQuery = fromQuery,
+        )
+        if (_state.value.routeMode == MapRouteMode.Result && to != null && from != null) {
+            onBuildRoute(online)
+        }
+    }
+
+    fun onClearRoute() {
+        routeJob?.cancel()
+        routeSearchJob?.cancel()
+        routeGeneration += 1
+        _state.value = _state.value.copy(
+            bottomTab = BottomTab.Search,
+            routeMode = MapRouteMode.Idle,
+            routeLoading = false,
+            routeError = null,
+            routeItineraries = emptyList(),
+            activeItineraryIndex = 0,
+            routeWalkJson = null,
+            routeTransitJson = null,
+            routeLabelsJson = null,
+            routeFromJson = null,
+            routeToJson = null,
+            routePickField = null,
+            routeFieldFocus = null,
+            routeHits = emptyList(),
+            bounds = null,
+        )
+        scheduleOrgPins()
+    }
+
+    fun onSelectItinerary(index: Int) {
+        val items = _state.value.routeItineraries
+        if (index !in items.indices) {
+            return
+        }
+        applyActiveItinerary(items, index, ++generation)
+    }
+
+    fun onRouteFieldFocus(field: RouteField?) {
+        _state.value = _state.value.copy(
+            routeFieldFocus = field,
+            searchFocused = false,
+            routeHits = if (field == null) emptyList() else _state.value.routeHits,
+        )
+    }
+
+    fun onRouteQueryChange(field: RouteField, text: String) {
+        routeSearchJob?.cancel()
+        _state.value = when (field) {
+            RouteField.From -> _state.value.copy(routeFromQuery = text, routeError = null)
+            RouteField.To -> _state.value.copy(routeToQuery = text, routeError = null)
+        }
+        if (!SearchLogic.shouldRequest(text)) {
+            routeSearchGeneration += 1
+            _state.value = _state.value.copy(routeHits = emptyList(), routeSearchLoading = false)
+            return
+        }
+        routeSearchJob = viewModelScope.launch {
+            delay(MapDefaults.SEARCH_DEBOUNCE_MS)
+            val request = ++routeSearchGeneration
+            _state.value = _state.value.copy(routeSearchLoading = true)
+            when (val result = search.search(text, cameraLat, cameraLon)) {
+                is SearchResult.Ok -> {
+                    if (request != routeSearchGeneration) return@launch
+                    _state.value = _state.value.copy(
+                        routeHits = result.body.hits,
+                        routeSearchLoading = false,
+                    )
+                }
+                is SearchResult.Unavailable, is SearchResult.Network -> {
+                    if (request != routeSearchGeneration) return@launch
+                    _state.value = _state.value.copy(
+                        routeHits = emptyList(),
+                        routeSearchLoading = false,
+                    )
+                }
+            }
+        }
+    }
+
+    fun onSelectRouteHit(field: RouteField, hit: SearchHit) {
+        routeSearchJob?.cancel()
+        routeSearchGeneration += 1
+        val point = RoutePoint(hit.lon, hit.lat, hit.label)
+        assignRoutePoint(field, point)
+    }
+
+    fun onNaKartu(field: RouteField) {
+        _state.value = _state.value.copy(
+            routePickField = field,
+            routeFieldFocus = null,
+            searchFocused = false,
+            routeHits = emptyList(),
+        )
+    }
+
+    fun onMapPicked(field: RouteField, lon: Double, lat: Double, label: String = mapPickLabel(lon, lat)) {
+        assignRoutePoint(field, RoutePoint(lon, lat, label))
+    }
+
+    fun onMapLongClick(lon: Double, lat: Double) {
+        if (_state.value.bottomTab != BottomTab.Route && _state.value.routeMode == MapRouteMode.Idle) {
+            return
+        }
+        val field = _state.value.routePickField ?: RouteField.To
+        onMapPicked(field, lon, lat)
+    }
+
+    fun onMyLocation(lon: Double, lat: Double) {
+        assignRoutePoint(RouteField.From, RoutePoint(lon, lat, MY_LOCATION_LABEL))
+    }
+
+    private fun enterRouteTab() {
+        val dest = selectedDestination()
+        val from = _state.value.routeFrom
+        val nextFrom = from ?: if (_state.value.gpsEnabled) _state.value.routeFrom else from
+        _state.value = _state.value.copy(
+            bottomTab = BottomTab.Route,
+            routeMode = if (_state.value.routeMode == MapRouteMode.Result) MapRouteMode.Result else MapRouteMode.Planning,
+            routeTo = _state.value.routeTo ?: dest,
+            routeToQuery = (_state.value.routeTo ?: dest)?.label ?: _state.value.routeToQuery,
+            routeFrom = nextFrom,
+            routeFromQuery = nextFrom?.label ?: _state.value.routeFromQuery,
+            searchFocused = false,
+            routeFieldFocus = null,
+            routeHits = emptyList(),
+        )
+    }
+
+    private fun selectedDestination(): RoutePoint? {
+        val org = _state.value.org
+        if (org != null) {
+            val label = org.address?.label?.takeIf { it.isNotBlank() } ?: org.name
+            return RoutePoint(org.location.lon, org.location.lat, label)
+        }
+        val building = _state.value.building
+        if (building != null) {
+            val label = building.addresses.firstOrNull()?.label
+                ?: building.name
+                ?: building.id
+            return RoutePoint(building.centroid.lon, building.centroid.lat, label)
+        }
+        val hit = _state.value.selectedHit ?: _state.value.peek?.hit
+        if (hit != null) {
+            return RoutePoint(hit.lon, hit.lat, hit.label)
+        }
+        return null
+    }
+
+    private fun assignRoutePoint(field: RouteField, point: RoutePoint) {
+        val wasResult = _state.value.routeMode == MapRouteMode.Result
+        _state.value = when (field) {
+            RouteField.From -> _state.value.copy(
+                routeFrom = point,
+                routeFromQuery = point.label,
+                routePickField = null,
+                routeFieldFocus = null,
+                routeHits = emptyList(),
+                routeMode = if (wasResult) MapRouteMode.Planning else {
+                    if (_state.value.routeMode == MapRouteMode.Idle) MapRouteMode.Planning else _state.value.routeMode
+                },
+                bottomTab = BottomTab.Route,
+            )
+            RouteField.To -> _state.value.copy(
+                routeTo = point,
+                routeToQuery = point.label,
+                routePickField = null,
+                routeFieldFocus = null,
+                routeHits = emptyList(),
+                routeMode = if (wasResult) MapRouteMode.Planning else {
+                    if (_state.value.routeMode == MapRouteMode.Idle) MapRouteMode.Planning else _state.value.routeMode
+                },
+                bottomTab = BottomTab.Route,
+            )
+        }
+        if (wasResult) {
+            clearRouteLayersOnly()
+        }
+    }
+
+    private fun clearRouteLayersOnly() {
+        routeJob?.cancel()
+        routeGeneration += 1
+        _state.value = _state.value.copy(
+            routeItineraries = emptyList(),
+            activeItineraryIndex = 0,
+            routeWalkJson = null,
+            routeTransitJson = null,
+            routeLabelsJson = null,
+            routeFromJson = null,
+            routeToJson = null,
+            routeLoading = false,
+            bounds = null,
+        )
+    }
+
+    private fun failRoute(request: Int, error: RouteUiError) {
+        if (request != routeGeneration) {
+            return
+        }
+        _state.value = _state.value.copy(
+            routeLoading = false,
+            routeError = error,
+            routeMode = MapRouteMode.Planning,
+        )
+    }
+
+    private fun applyRouteResult(body: rs.zylos.novisad.data.api.RouteResponse, request: Int) {
+        val sorted = RouteLogic.sortItineraries(RouteLogic.itinerariesOf(body))
+        if (sorted.isEmpty()) {
+            failRoute(request, RouteUiError.NoRoute)
+            return
+        }
+        _state.value = _state.value.copy(
+            routeMode = MapRouteMode.Result,
+            routeLoading = false,
+            routeError = null,
+            routeItineraries = sorted,
+            bottomTab = BottomTab.Route,
+        )
+        applyActiveItinerary(sorted, 0, request)
+    }
+
+    private fun applyActiveItinerary(
+        items: List<rs.zylos.novisad.data.api.RouteItinerary>,
+        index: Int,
+        nonce: Int,
+    ) {
+        val itinerary = items.getOrNull(index) ?: return
+        val from = _state.value.routeFrom
+        val to = _state.value.routeTo
+        _state.value = _state.value.copy(
+            activeItineraryIndex = index,
+            routeWalkJson = RouteLogic.walkCollectionJson(itinerary),
+            routeTransitJson = RouteLogic.transitCollectionJson(itinerary),
+            routeLabelsJson = RouteLogic.labelsCollectionJson(itinerary),
+            routeFromJson = from?.let { RouteLogic.pointCollectionJson(it.lon, it.lat) },
+            routeToJson = to?.let { RouteLogic.pointCollectionJson(it.lon, it.lat) },
+            bounds = BoundsTarget(
+                points = RouteLogic.boundsPoints(itinerary, from, to),
+                durationMs = MapDefaults.FLY_DURATION_MS,
+                nonce = nonce,
+                topHalf = true,
+            ),
+        )
+    }
+
+    private fun mapPickLabel(lon: Double, lat: Double): String {
+        return String.format("%.5f, %.5f", lat, lon)
+    }
+
+    override fun onCleared() {
+        pickJob?.cancel()
+        searchJob?.cancel()
+        orgPinsJob?.cancel()
+        routeJob?.cancel()
+        routeSearchJob?.cancel()
+        super.onCleared()
+    }
+
     fun consumeCamera() {
         if (_state.value.camera != null) {
             _state.value = _state.value.copy(camera = null)
@@ -401,13 +755,6 @@ class MapViewModel(
         if (_state.value.bounds != null) {
             _state.value = _state.value.copy(bounds = null)
         }
-    }
-
-    override fun onCleared() {
-        pickJob?.cancel()
-        searchJob?.cancel()
-        orgPinsJob?.cancel()
-        super.onCleared()
     }
 
     private fun enterSearchMulti(hits: List<SearchHit>) {
@@ -440,7 +787,7 @@ class MapViewModel(
 
     private fun scheduleOrgPins() {
         orgPinsJob?.cancel()
-        if (_state.value.pinMode != MapPinMode.Browse) {
+        if (_state.value.pinMode != MapPinMode.Browse || _state.value.routeMode != MapRouteMode.Idle) {
             return
         }
         if (!OrgPinLimits.shouldRequest(cameraZoom)) {
@@ -453,6 +800,7 @@ class MapViewModel(
         orgPinsJob = viewModelScope.launch {
             delay(OrgPinLimits.debounceMs(zoom))
             if (_state.value.pinMode != MapPinMode.Browse) return@launch
+            if (_state.value.routeMode != MapRouteMode.Idle) return@launch
             val latest = cameraBbox ?: bbox
             if (!OrgPinLimits.shouldRequest(cameraZoom)) {
                 _state.value = _state.value.copy(orgPinsJson = OrgPins.emptyCollectionJson())
@@ -464,6 +812,7 @@ class MapViewModel(
                 is OrgBboxResult.Ok -> {
                     if (request != orgPinsGeneration) return@launch
                     if (_state.value.pinMode != MapPinMode.Browse) return@launch
+                    if (_state.value.routeMode != MapRouteMode.Idle) return@launch
                     val visible = OrgPinLogic.visiblePins(result.pins, cameraZoom, latest)
                     _state.value = _state.value.copy(orgPinsJson = OrgPins.collectionJson(visible))
                 }
@@ -551,6 +900,7 @@ class MapViewModel(
     companion object {
         private const val ADDRESS_FALLBACK = "Adresa"
         private const val ORG_FALLBACK = "Organizacija"
+        private const val MY_LOCATION_LABEL = "Moja lokacija"
 
         private object IdleSearch : SearchRepository {
             override suspend fun search(q: String, lat: Double, lon: Double, limit: Int) =
@@ -562,7 +912,11 @@ class MapViewModel(
             override suspend fun save(query: String, hitId: String?, label: String?, kind: String?, categorySlug: String?) = Unit
         }
 
-        fun factory(api: ZylosApi, historyDao: SearchHistoryDao): ViewModelProvider.Factory {
+        private object IdleRoutes : RouteRepository {
+            override suspend fun planTransit(from: LonLat, to: LonLat) = RouteResult.Offline
+        }
+
+        fun factory(api: ZylosApi, historyDao: SearchHistoryDao, routeApi: ZylosApi = api): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -571,6 +925,7 @@ class MapViewModel(
                         HttpOrgRepository(api),
                         HttpSearchRepository(api),
                         RoomSearchHistoryStore(historyDao),
+                        HttpRouteRepository(routeApi),
                     ) as T
                 }
             }

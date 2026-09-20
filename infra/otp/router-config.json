@@ -1,0 +1,11 @@
+{
+  "routingDefaults": {
+    "numItineraries": 3,
+    "walk": {
+      "speed": 1.3
+    },
+    "accessEgress": {
+      "maxDuration": "20m"
+    }
+  }
+}

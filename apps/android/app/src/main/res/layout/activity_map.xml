@@ -197,15 +197,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:background="@color/paper"
         android:elevation="16dp"
         android:orientation="vertical"
-        android:paddingHorizontal="@dimen/margin_screen"
         android:translationZ="16dp">
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/searchDropdownCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/margin_screen"
             android:layout_marginBottom="8dp"
             android:clickable="true"
             android:contentDescription="@string/search_dropdown_cd"
@@ -265,10 +266,76 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <LinearLayout
+            android:id="@+id/routeResults"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/route_sheet_step2"
+            android:background="@color/paper"
+            android:clickable="true"
+            android:contentDescription="@string/ruta_sheet_cd"
+            android:focusable="true"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <View
+                    android:id="@+id/routeHandle"
+                    android:layout_width="@dimen/sheet_handle_width"
+                    android:layout_height="@dimen/sheet_handle_height"
+                    android:layout_gravity="top|center_horizontal"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/sheet_handle" />
+
+                <TextView
+                    android:id="@+id/routeClose"
+                    android:layout_width="@dimen/sheet_close_size"
+                    android:layout_height="@dimen/sheet_close_size"
+                    android:layout_gravity="end"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/bg_close_btn"
+                    android:contentDescription="@string/zatvori_cd"
+                    android:gravity="center"
+                    android:text="@string/zatvori"
+                    android:textColor="@color/muted"
+                    android:textSize="16sp" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:id="@+id/routeDots"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:gravity="center"
+                android:orientation="horizontal" />
+
+            <TextView
+                android:id="@+id/routeStep1Summary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:paddingHorizontal="16dp"
+                android:textColor="@color/ink"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/routePager"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:paddingHorizontal="16dp" />
+        </LinearLayout>
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/searchChrome"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/margin_screen"
+            android:layout_marginBottom="8dp"
             android:clickable="true"
             android:contentDescription="@string/search_cd"
             android:focusable="true"
@@ -326,6 +393,81 @@
                     android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <include
+            android:id="@+id/routeChrome"
+            layout="@layout/route_chrome" />
+
+        <LinearLayout
+            android:id="@+id/tabBar"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/bottom_tab_height"
+            android:background="@color/paper"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/tabSearch"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/tabSearchIcon"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/accent" />
+
+                <TextView
+                    android:id="@+id/tabSearchLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tab_pretraga"
+                    android:textColor="@color/accent"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tabRoute"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/tabRouteIcon"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_tab_route"
+                    app:tint="@color/muted" />
+
+                <TextView
+                    android:id="@+id/tabRouteLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tab_ruta"
+                    android:textColor="@color/muted"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tabBuildCta"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_cta"
+                android:gravity="center"
+                android:text="@string/ruta_napravi"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout

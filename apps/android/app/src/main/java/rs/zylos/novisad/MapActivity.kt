@@ -1,7 +1,13 @@
 package rs.zylos.novisad
 
+import android.annotation.SuppressLint
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.RectF
+import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -15,9 +21,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -53,18 +61,24 @@ import rs.zylos.novisad.map.MapStyleFactory
 import rs.zylos.novisad.map.MbtilesStore
 import rs.zylos.novisad.map.OrgPins
 import rs.zylos.novisad.map.OrgPinsLayers
+import rs.zylos.novisad.map.RouteLayers
 import rs.zylos.novisad.map.SearchMarker
 import rs.zylos.novisad.map.SearchMarkerLayers
 import rs.zylos.novisad.map.SearchPins
 import rs.zylos.novisad.map.SearchPinsLayers
+import rs.zylos.novisad.ui.route.RouteSheetAdapter
 import rs.zylos.novisad.ui.search.SearchDropdownAdapter
 import rs.zylos.novisad.ui.search.SearchRow
 import rs.zylos.novisad.ui.sheet.OrgListAdapter
 import rs.zylos.novisad.ui.sheet.SheetAnchors
 import rs.zylos.novisad.ui.sheet.SheetStep
+import rs.zylos.novisad.viewmodel.BottomTab
 import rs.zylos.novisad.viewmodel.MapPinMode
+import rs.zylos.novisad.viewmodel.MapRouteMode
 import rs.zylos.novisad.viewmodel.MapUiState
 import rs.zylos.novisad.viewmodel.MapViewModel
+import rs.zylos.novisad.viewmodel.RouteField
+import rs.zylos.novisad.viewmodel.RouteUiError
 import rs.zylos.novisad.viewmodel.SearchLogic
 import rs.zylos.novisad.viewmodel.SearchUiError
 import rs.zylos.novisad.viewmodel.SheetLogic
@@ -80,25 +94,51 @@ class MapActivity : AppCompatActivity() {
     private var mapStyle: Style? = null
     private var applyingSheetState = false
     private var applyingSearchText = false
+    private var applyingRouteText = false
+    private var applyingRoutePager = false
     private var lastCameraNonce = 0
     private var lastBoundsNonce = 0
     private var lastSheetMode: SheetMode = SheetMode.Idle
     private var lastPinMode: MapPinMode = MapPinMode.Browse
+    private var lastRouteMode: MapRouteMode = MapRouteMode.Idle
     private var sheetStep: SheetStep = SheetStep.Minimal
+    private var routeSheetStep = 2
     private var insetBottom = 0
     private var insetTop = 0
     private var searchFlyPaddingActive = false
 
     private val viewModel: MapViewModel by viewModels {
         val app = application as ZylosApp
-        MapViewModel.factory(ApiClient.create(BuildConfig.API_URL), app.database.searchHistoryDao())
+        val url = BuildConfig.API_URL
+        MapViewModel.factory(
+            ApiClient.create(url),
+            app.database.searchHistoryDao(),
+            ApiClient.createRoute(url),
+        )
+    }
+
+    private val locationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants ->
+        if (grants.values.any { it }) {
+            applyGpsAvailability()
+            fillMyLocation()
+        } else {
+            applyGpsAvailability()
+        }
     }
 
     private val orgAdapter = OrgListAdapter { item -> viewModel.onOrgSelected(item.id) }
+    private val routeAdapter = RouteSheetAdapter()
     private val searchAdapter = SearchDropdownAdapter(
         onHit = { hit ->
             hideKeyboard()
-            viewModel.onSelectHit(hit)
+            if (viewModel.state.value.bottomTab == BottomTab.Route) {
+                val field = viewModel.state.value.routeFieldFocus ?: RouteField.To
+                viewModel.onSelectRouteHit(field, hit)
+            } else {
+                viewModel.onSelectHit(hit)
+            }
         },
         onHistory = { item ->
             applyingSearchText = true
@@ -119,9 +159,11 @@ class MapActivity : AppCompatActivity() {
             when {
                 state.dropdownOpen -> {
                     viewModel.onSearchFocusChanged(false)
+                    viewModel.onRouteFieldFocus(null)
                     binding.searchInput.clearFocus()
                     hideKeyboard()
                 }
+                state.routeMode == MapRouteMode.Result -> viewModel.onClearRoute()
                 state.mode == SheetMode.Organization && state.building != null -> viewModel.onBackToBuilding()
                 state.mode == SheetMode.Organization ||
                     state.mode == SheetMode.Building ||
@@ -152,12 +194,11 @@ class MapActivity : AppCompatActivity() {
             insetBottom = maxOf(bars.bottom, ime.bottom)
             insetTop = bars.top
             val dockParams = binding.searchDock.layoutParams as CoordinatorLayout.LayoutParams
-            dockParams.bottomMargin = dp(12) + insetBottom
+            dockParams.bottomMargin = insetBottom
             binding.searchDock.layoutParams = dockParams
             val hostParams = binding.sheetHost.layoutParams as CoordinatorLayout.LayoutParams
             hostParams.topMargin = insetTop
-            hostParams.bottomMargin = resources.getDimensionPixelSize(R.dimen.search_dock_height) +
-                resources.getDimensionPixelSize(R.dimen.sheet_search_gap) + insetBottom
+            hostParams.bottomMargin = dockReservePx()
             binding.sheetHost.layoutParams = hostParams
             updateDropdownMaxHeight()
             updateMapControls()
@@ -192,6 +233,37 @@ class MapActivity : AppCompatActivity() {
             viewModel.onClearSearch()
             binding.searchInput.requestFocus()
         }
+        binding.tabSearch.setOnClickListener { viewModel.onSelectTab(BottomTab.Search) }
+        binding.tabRoute.setOnClickListener {
+            viewModel.onSelectTab(BottomTab.Route)
+            if (viewModel.state.value.routeFrom == null) {
+                fillMyLocation()
+            }
+        }
+        binding.tabBuildCta.setOnClickListener { viewModel.onBuildCta(isOnline()) }
+        binding.routeClose.setOnClickListener { viewModel.onClearRoute() }
+        binding.routeChrome.routeSwap.setOnClickListener { viewModel.onSwapRoute(isOnline()) }
+        binding.routeChrome.routeFromMap.setOnClickListener { viewModel.onNaKartu(RouteField.From) }
+        binding.routeChrome.routeToMap.setOnClickListener { viewModel.onNaKartu(RouteField.To) }
+        binding.routeChrome.routeMyLocation.setOnClickListener {
+            if (hasLocationPermission()) fillMyLocation() else {
+                locationPermission.launch(
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                )
+            }
+        }
+        binding.routeHandle.setOnClickListener { cycleRouteSheetStep() }
+        binding.routePager.adapter = routeAdapter
+        binding.routePager.registerOnPageChangeCallback(object : androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                if (!applyingRoutePager) {
+                    viewModel.onSelectItinerary(position)
+                }
+            }
+        })
+        bindRouteField(binding.routeChrome.routeFromInput, RouteField.From)
+        bindRouteField(binding.routeChrome.routeToInput, RouteField.To)
+        applyGpsAvailability()
         binding.zoomIn.setOnClickListener { bumpZoom(MapDefaults.ZOOM_STEP) }
         binding.zoomOut.setOnClickListener { bumpZoom(-MapDefaults.ZOOM_STEP) }
         binding.searchInput.addTextChangedListener(object : TextWatcher {
@@ -261,20 +333,25 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun render(state: MapUiState) {
-        backCallback.isEnabled = state.mode != SheetMode.Idle || state.dropdownOpen
+        backCallback.isEnabled = state.mode != SheetMode.Idle || state.dropdownOpen ||
+            state.routeMode == MapRouteMode.Result || state.bottomTab == BottomTab.Route
+        renderTabs(state)
         renderSearch(state)
+        renderRoute(state)
         renderSheet(state)
         renderHighlight(state.highlightJson)
         renderOrgPins(state)
         renderSearchPins(state)
         renderMarker(state.markerJson)
+        renderRouteLayers(state)
         renderCamera(state)
         renderBounds(state)
-        applyPoiSearchDim(state.pinMode != MapPinMode.Browse)
+        applyPoiSearchDim(state.pinMode != MapPinMode.Browse || state.routeMode != MapRouteMode.Idle)
         if (state.pinMode == MapPinMode.SearchMulti && lastPinMode != MapPinMode.SearchMulti) {
             hideKeyboard()
         }
         lastPinMode = state.pinMode
+        lastRouteMode = state.routeMode
         updateMapControls()
         state.message?.let { message ->
             val text = when (message) {
@@ -287,6 +364,16 @@ class MapActivity : AppCompatActivity() {
             }
             showMapToast(text)
             viewModel.consumeMessage()
+        }
+        state.routeError?.let { error ->
+            val text = when (error) {
+                RouteUiError.OutsideCity -> getString(R.string.ruta_van_grada)
+                RouteUiError.Timeout -> getString(R.string.ruta_timeout)
+                RouteUiError.NoRoute -> getString(R.string.ruta_nema)
+                RouteUiError.Offline -> getString(R.string.ruta_offline)
+            }
+            showMapToast(text)
+            viewModel.consumeRouteError()
         }
     }
 
@@ -302,10 +389,18 @@ class MapActivity : AppCompatActivity() {
             if (state.query.isNotEmpty() && !loading) View.VISIBLE else View.GONE
         binding.searchSpinner.visibility = if (loading) View.VISIBLE else View.GONE
 
-        val showingHistory = state.searchFocused && state.query.isEmpty() && state.history.isNotEmpty()
-        val showingLive = state.searchFocused && state.query.length >= MapDefaults.SEARCH_MIN_LENGTH && !loading
-        val showingHits = showingLive && state.hits.isNotEmpty() && state.searchError == null
-        val showingError = showingLive && state.searchError != null
+        val showingHistory = state.bottomTab == BottomTab.Search &&
+            state.searchFocused && state.query.isEmpty() && state.history.isNotEmpty()
+        val showingLive = if (state.bottomTab == BottomTab.Route && state.routeFieldFocus != null) {
+            val q = if (state.routeFieldFocus == RouteField.From) state.routeFromQuery else state.routeToQuery
+            q.length >= MapDefaults.SEARCH_MIN_LENGTH && !state.routeSearchLoading
+        } else {
+            state.searchFocused && state.query.length >= MapDefaults.SEARCH_MIN_LENGTH && !loading
+        }
+        val liveHits = if (state.bottomTab == BottomTab.Route) state.routeHits else state.hits
+        val showingHits = showingLive && liveHits.isNotEmpty() &&
+            (state.bottomTab == BottomTab.Route || state.searchError == null)
+        val showingError = state.bottomTab == BottomTab.Search && showingLive && state.searchError != null
         val open = showingHistory || showingHits || showingError
         binding.searchDropdownCard.visibility = if (open) View.VISIBLE else View.GONE
         binding.searchHistoryHeader.visibility = if (showingHistory) View.VISIBLE else View.GONE
@@ -335,18 +430,199 @@ class MapActivity : AppCompatActivity() {
             }
             showingHits -> {
                 binding.searchStatus.visibility = View.GONE
-                searchAdapter.submit(state.hits.map { SearchRow.Hit(it) })
+                val rows = liveHits.map { SearchRow.Hit(it) }
+                searchAdapter.submit(rows)
             }
             else -> {
                 binding.searchStatus.visibility = View.GONE
                 searchAdapter.submit(emptyList())
             }
         }
-        binding.showAllOnMap.visibility = if (showingHits) View.VISIBLE else View.GONE
+        binding.showAllOnMap.visibility =
+            if (showingHits && state.bottomTab == BottomTab.Search) View.VISIBLE else View.GONE
         updateDropdownMaxHeight()
     }
 
+    private fun renderTabs(state: MapUiState) {
+        val routeTab = state.bottomTab == BottomTab.Route
+        val showCta = routeTab && state.canBuildRoute && state.routeMode != MapRouteMode.Result
+        binding.tabBuildCta.visibility = if (showCta) View.VISIBLE else View.GONE
+        binding.tabRoute.visibility = if (showCta) View.GONE else View.VISIBLE
+        val searchColor = if (!routeTab) R.color.accent else R.color.muted
+        val routeColor = if (routeTab && !showCta) R.color.accent else R.color.muted
+        binding.tabSearchIcon.imageTintList = ContextCompat.getColorStateList(this, searchColor)
+        binding.tabSearchLabel.setTextColor(ContextCompat.getColor(this, searchColor))
+        binding.tabRouteIcon.imageTintList = ContextCompat.getColorStateList(this, routeColor)
+        binding.tabRouteLabel.setTextColor(ContextCompat.getColor(this, routeColor))
+        binding.tabBuildCta.isEnabled = !state.routeLoading
+        binding.tabBuildCta.text = if (state.routeLoading) getString(R.string.ucitavam) else getString(R.string.ruta_napravi)
+    }
+
+    private fun renderRoute(state: MapUiState) {
+        val routeTab = state.bottomTab == BottomTab.Route
+        binding.searchChrome.visibility = if (routeTab) View.GONE else View.VISIBLE
+        binding.routeChrome.root.visibility = if (routeTab) View.VISIBLE else View.GONE
+        binding.routeChrome.routeSpinner.visibility = if (state.routeLoading) View.VISIBLE else View.GONE
+        binding.routeChrome.routeMyLocation.isEnabled = state.gpsEnabled
+        binding.routeChrome.routeMyLocation.alpha = if (state.gpsEnabled) 1f else 0.4f
+        setRouteText(binding.routeChrome.routeFromInput, state.routeFromQuery)
+        setRouteText(binding.routeChrome.routeToInput, state.routeToQuery)
+        val result = state.routeMode == MapRouteMode.Result
+        if (result && lastRouteMode != MapRouteMode.Result) {
+            routeSheetStep = 2
+        }
+        binding.routeResults.visibility = if (result && routeTab) View.VISIBLE else View.GONE
+        if (result && routeTab) {
+            if (routeAdapter.itemCount != state.routeItineraries.size) {
+                routeAdapter.submit(state.routeItineraries)
+            } else {
+                routeAdapter.submit(state.routeItineraries)
+            }
+            if (binding.routePager.currentItem != state.activeItineraryIndex) {
+                applyingRoutePager = true
+                binding.routePager.setCurrentItem(state.activeItineraryIndex, false)
+                applyingRoutePager = false
+            }
+            bindRouteDots(state)
+            val step1 = routeSheetStep == 1
+            binding.routeStep1Summary.visibility = if (step1) View.VISIBLE else View.GONE
+            binding.routePager.visibility = if (step1) View.GONE else View.VISIBLE
+            val fromLabel = state.routeFrom?.label.orEmpty()
+            val toLabel = state.routeTo?.label.orEmpty()
+            binding.routeStep1Summary.text = "$fromLabel → $toLabel"
+            applyRouteResultsHeight()
+        }
+        binding.searchDock.post { updateMapControls() }
+    }
+
+    private fun setRouteText(input: EditText, value: String) {
+        if (input.text.toString() == value) {
+            return
+        }
+        applyingRouteText = true
+        input.setText(value)
+        input.setSelection(value.length)
+        applyingRouteText = false
+    }
+
+    private fun bindRouteDots(state: MapUiState) {
+        val host = binding.routeDots
+        host.removeAllViews()
+        val count = state.routeItineraries.size
+        if (count <= 1) {
+            host.visibility = View.GONE
+            return
+        }
+        host.visibility = View.VISIBLE
+        repeat(count) { index ->
+            val dot = View(this)
+            val size = dp(8)
+            val params = LinearLayout.LayoutParams(size, size)
+            params.marginStart = dp(4)
+            params.marginEnd = dp(4)
+            dot.layoutParams = params
+            dot.background = ContextCompat.getDrawable(
+                this,
+                if (index == state.activeItineraryIndex) R.drawable.bg_dot_on else R.drawable.bg_dot_off,
+            )
+            host.addView(dot)
+        }
+    }
+
+    private fun applyRouteResultsHeight() {
+        val params = binding.routeResults.layoutParams
+        params.height = when (routeSheetStep) {
+            1 -> dp(MapDefaults.ROUTE_SHEET_STEP1_DP)
+            3 -> (binding.coordinator.height - insetTop - dp(MapDefaults.ROUTE_PANEL_HEIGHT_DP) -
+                dp(MapDefaults.BOTTOM_TAB_HEIGHT_DP) - insetBottom).coerceAtLeast(dp(MapDefaults.ROUTE_SHEET_STEP2_DP))
+            else -> dp(MapDefaults.ROUTE_SHEET_STEP2_DP)
+        }
+        binding.routeResults.layoutParams = params
+    }
+
+    private fun cycleRouteSheetStep() {
+        routeSheetStep = when (routeSheetStep) {
+            1 -> 2
+            2 -> 3
+            else -> 1
+        }
+        applyRouteResultsHeight()
+    }
+
+    private fun bindRouteField(input: EditText, field: RouteField) {
+        input.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                if (applyingRouteText) {
+                    return
+                }
+                viewModel.onRouteQueryChange(field, s?.toString().orEmpty())
+            }
+        })
+        input.setOnFocusChangeListener { _, hasFocus ->
+            viewModel.onRouteFieldFocus(if (hasFocus) field else null)
+        }
+    }
+
+    private fun renderRouteLayers(state: MapUiState) {
+        val style = mapStyle ?: return
+        if (state.routeMode == MapRouteMode.Result) {
+            RouteLayers.setGeometry(
+                style,
+                state.routeWalkJson,
+                state.routeTransitJson,
+                state.routeLabelsJson,
+                state.routeFromJson,
+                state.routeToJson,
+            )
+        } else {
+            RouteLayers.clear(style)
+        }
+    }
+
+    private fun isOnline(): Boolean {
+        val cm = getSystemService(ConnectivityManager::class.java) ?: return false
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun hasLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun applyGpsAvailability() {
+        val lm = getSystemService(LocationManager::class.java)
+        val enabled = hasLocationPermission() && lm != null && (
+            lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+            )
+        viewModel.onGpsAvailability(enabled)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun fillMyLocation() {
+        if (!hasLocationPermission()) {
+            return
+        }
+        val lm = getSystemService(LocationManager::class.java) ?: return
+        val loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            ?: lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+        if (loc != null) {
+            viewModel.onMyLocation(loc.longitude, loc.latitude)
+        }
+    }
+
     private fun renderSheet(state: MapUiState) {
+        if (state.routeMode == MapRouteMode.Result) {
+            setSheetState(BottomSheetBehavior.STATE_HIDDEN)
+            lastSheetMode = state.mode
+            return
+        }
         val modeChanged = lastSheetMode != state.mode
         val loading = state.mode == SheetMode.Loading
         when (state.mode) {
@@ -539,11 +815,7 @@ class MapActivity : AppCompatActivity() {
 
     private fun showMapToast(text: String) {
         val snackbar = Snackbar.make(binding.coordinator, text, MapDefaults.TOAST_DURATION_MS)
-        snackbar.anchorView = if (sheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN) {
-            binding.searchChrome
-        } else {
-            binding.buildingSheet
-        }
+        snackbar.anchorView = binding.searchDock
         val view = snackbar.view
         view.background = ContextCompat.getDrawable(this, R.drawable.bg_toast_pill)
         view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text).apply {
@@ -577,8 +849,14 @@ class MapActivity : AppCompatActivity() {
     }
 
     private fun dockReservePx(): Int {
-        return resources.getDimensionPixelSize(R.dimen.search_dock_height) +
-            resources.getDimensionPixelSize(R.dimen.sheet_search_gap) + insetBottom
+        val gap = resources.getDimensionPixelSize(R.dimen.sheet_search_gap)
+        val dockHeight = if (binding.searchDock.height > 0) {
+            binding.searchDock.height
+        } else {
+            dp(MapDefaults.BOTTOM_TAB_HEIGHT_DP + 60)
+        }
+        val dockMargin = (binding.searchDock.layoutParams as CoordinatorLayout.LayoutParams).bottomMargin
+        return dockHeight + dockMargin + gap
     }
 
     private fun controlsBottomMarginPx(): Int {
@@ -602,13 +880,21 @@ class MapActivity : AppCompatActivity() {
 
     private fun renderOrgPins(state: MapUiState) {
         val style = mapStyle ?: return
-        val json = if (state.pinMode == MapPinMode.Browse) state.orgPinsJson else null
+        val json = if (state.pinMode == MapPinMode.Browse && state.routeMode == MapRouteMode.Idle) {
+            state.orgPinsJson
+        } else {
+            null
+        }
         OrgPinsLayers.setGeometry(style, json)
     }
 
     private fun renderSearchPins(state: MapUiState) {
         val style = mapStyle ?: return
-        val json = if (state.pinMode == MapPinMode.SearchMulti) state.searchPinsJson else null
+        val json = if (state.pinMode == MapPinMode.SearchMulti && state.routeMode == MapRouteMode.Idle) {
+            state.searchPinsJson
+        } else {
+            null
+        }
         SearchPinsLayers.setGeometry(style, json)
     }
 
@@ -669,7 +955,11 @@ class MapActivity : AppCompatActivity() {
         val padLeft = dp(32)
         val padRight = dp(32)
         val padTop = insetTop + dp(48)
-        val padBottom = dockReservePx() + dp(MapDefaults.SHEET_STEP1_DP) + dp(24)
+        val padBottom = if (target.topHalf) {
+            (mapView.height * MapDefaults.ROUTE_FIT_TOP_RATIO).toInt().coerceAtLeast(dockReservePx())
+        } else {
+            dockReservePx() + dp(MapDefaults.SHEET_STEP1_DP) + dp(24)
+        }
         if (points.size == 1) {
             mapLibre.easeCamera(
                 CameraUpdateFactory.newLatLngZoom(
@@ -730,6 +1020,8 @@ class MapActivity : AppCompatActivity() {
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(binding.searchInput.windowToken, 0)
         binding.searchInput.clearFocus()
+        binding.routeChrome.routeFromInput.clearFocus()
+        binding.routeChrome.routeToInput.clearFocus()
     }
 
     private fun loadMap() {
@@ -780,21 +1072,39 @@ class MapActivity : AppCompatActivity() {
                         OrgPinsLayers.ensure(style)
                         SearchPinsLayers.ensure(style)
                         SearchMarkerLayers.ensure(style)
+                        RouteLayers.ensure(style)
                         renderHighlight(viewModel.state.value.highlightJson)
                         renderOrgPins(viewModel.state.value)
                         renderSearchPins(viewModel.state.value)
                         renderMarker(viewModel.state.value.markerJson)
-                        applyPoiSearchDim(viewModel.state.value.pinMode != MapPinMode.Browse)
+                        renderRouteLayers(viewModel.state.value)
+                        applyPoiSearchDim(
+                            viewModel.state.value.pinMode != MapPinMode.Browse ||
+                                viewModel.state.value.routeMode != MapRouteMode.Idle,
+                        )
+                        mapLibre.addOnMapLongClickListener { latLng ->
+                            viewModel.onMapLongClick(latLng.longitude, latLng.latitude)
+                            true
+                        }
                         mapLibre.addOnMapClickListener { latLng ->
                             hideKeyboard()
                             if (viewModel.state.value.dropdownOpen) {
                                 viewModel.onSearchFocusChanged(false)
+                                viewModel.onRouteFieldFocus(null)
                                 binding.searchInput.clearFocus()
                                 return@addOnMapClickListener true
                             }
                             val screen = mapLibre.projection.toScreenLocation(latLng)
                             val slop = dp(16).toFloat()
                             val box = RectF(screen.x - slop, screen.y - slop, screen.x + slop, screen.y + slop)
+                            val routeHits = mapLibre.queryRenderedFeatures(
+                                box,
+                                RouteLayers.FROM_LAYER_ID,
+                                RouteLayers.TO_LAYER_ID,
+                            )
+                            if (routeHits.isNotEmpty()) {
+                                return@addOnMapClickListener true
+                            }
                             val markerHits = mapLibre.queryRenderedFeatures(box, SearchMarker.LAYER_ID)
                             if (markerHits.isNotEmpty()) {
                                 viewModel.onSearchMarkerClick()
@@ -810,7 +1120,7 @@ class MapActivity : AppCompatActivity() {
                                 OrgPins.CIRCLE_LAYER_ID,
                                 OrgPins.LABEL_LAYER_ID,
                             )
-                            if (orgHits.isNotEmpty()) {
+                            if (orgHits.isNotEmpty() && viewModel.state.value.routeMode == MapRouteMode.Idle) {
                                 viewModel.onOrgPinClick(orgHits[0].getStringProperty("id"))
                                 return@addOnMapClickListener true
                             }

@@ -23,4 +23,13 @@
     <dimen name="elevation_control">4dp</dimen>
     <dimen name="org_field_label_width">92dp</dimen>
     <dimen name="map_control_gap">6dp</dimen>
+    <dimen name="bottom_tab_height">56dp</dimen>
+    <dimen name="route_panel_height">164dp</dimen>
+    <dimen name="route_row_height">44dp</dimen>
+    <dimen name="route_side_btn">40dp</dimen>
+    <dimen name="route_mode_height">36dp</dimen>
+    <dimen name="route_swap_width">36dp</dimen>
+    <dimen name="route_sheet_step1">80dp</dimen>
+    <dimen name="route_sheet_step2">280dp</dimen>
+    <dimen name="route_card_radius">12dp</dimen>
 </resources>

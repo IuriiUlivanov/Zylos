@@ -3,6 +3,7 @@ package rs.zylos.novisad.viewmodel
 import rs.zylos.novisad.data.api.BuildingDetailResponse
 import rs.zylos.novisad.data.api.LonLat
 import rs.zylos.novisad.data.api.OrgDetailResponse
+import rs.zylos.novisad.data.api.RouteItinerary
 import rs.zylos.novisad.data.api.SearchHit
 import rs.zylos.novisad.data.local.SearchHistoryEntity
 import rs.zylos.novisad.map.MapDefaults
@@ -54,11 +55,32 @@ data class BoundsTarget(
     val points: List<LonLat>,
     val durationMs: Int,
     val nonce: Int,
+    val topHalf: Boolean = false,
 )
 
 data class MapUiState(
     val mode: SheetMode = SheetMode.Idle,
     val pinMode: MapPinMode = MapPinMode.Browse,
+    val bottomTab: BottomTab = BottomTab.Search,
+    val routeMode: MapRouteMode = MapRouteMode.Idle,
+    val routeFrom: RoutePoint? = null,
+    val routeTo: RoutePoint? = null,
+    val routePickField: RouteField? = null,
+    val routeLoading: Boolean = false,
+    val routeError: RouteUiError? = null,
+    val routeItineraries: List<RouteItinerary> = emptyList(),
+    val activeItineraryIndex: Int = 0,
+    val routeWalkJson: String? = null,
+    val routeTransitJson: String? = null,
+    val routeLabelsJson: String? = null,
+    val routeFromJson: String? = null,
+    val routeToJson: String? = null,
+    val routeFieldFocus: RouteField? = null,
+    val routeFromQuery: String = "",
+    val routeToQuery: String = "",
+    val routeHits: List<SearchHit> = emptyList(),
+    val routeSearchLoading: Boolean = false,
+    val gpsEnabled: Boolean = false,
     val building: BuildingDetailResponse? = null,
     val org: OrgDetailResponse? = null,
     val peek: PeekInfo? = null,
@@ -80,10 +102,19 @@ data class MapUiState(
     val generation: Int = 0,
 ) {
     val dropdownOpen: Boolean
-        get() = searchFocused && (
-            (query.isEmpty() && history.isNotEmpty()) ||
-                query.length >= MapDefaults.SEARCH_MIN_LENGTH
-            )
+        get() = when {
+            bottomTab == BottomTab.Route && routeFieldFocus != null -> {
+                val q = if (routeFieldFocus == RouteField.From) routeFromQuery else routeToQuery
+                q.length >= MapDefaults.SEARCH_MIN_LENGTH
+            }
+            else -> searchFocused && (
+                (query.isEmpty() && history.isNotEmpty()) ||
+                    query.length >= MapDefaults.SEARCH_MIN_LENGTH
+                )
+        }
+
+    val canBuildRoute: Boolean
+        get() = RouteLogic.bothPointsReady(routeFrom, routeTo)
 }
 
 object SheetLogic {

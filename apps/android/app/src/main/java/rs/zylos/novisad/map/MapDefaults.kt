@@ -34,4 +34,18 @@ object MapDefaults {
     const val TOAST_DURATION_MS = 2500
     const val ZOOM_STEP = 1.0
     const val CONTROL_GAP_DP = 8
+
+    const val ROUTE_CLIENT_TIMEOUT_MS = 8_000L
+    const val ROUTE_SHEET_ANIM_MS = 250
+    const val ROUTE_LINE_WIDTH_TRANSIT = 6
+    const val ROUTE_LINE_WIDTH_WALK = 4
+    const val ROUTE_WALK_COLOR = "#5B6B7A"
+    const val ROUTE_FROM_COLOR = "#00B341"
+    const val ROUTE_TO_COLOR = "#B42318"
+    const val ROUTE_FIT_TOP_RATIO = 0.5f
+    const val BOTTOM_TAB_HEIGHT_DP = 56
+    const val ROUTE_PANEL_HEIGHT_DP = 164
+    const val ROUTE_SHEET_STEP1_DP = 80
+    const val ROUTE_SHEET_STEP2_DP = 280
+    const val ROUTE_DASH = 2f
 }

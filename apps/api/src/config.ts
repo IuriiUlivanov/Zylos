@@ -11,6 +11,7 @@ export const config = {
   meiliUrl: (process.env.MEILI_URL ?? "http://meilisearch:7700").replace(/\/$/, ""),
   meiliKey: required("MEILI_MASTER_KEY"),
   databaseUrl: process.env.DATABASE_URL ?? "",
+  otpUrl: (process.env.OTP_URL ?? "http://otp:8080").replace(/\/$/, ""),
   corsOrigins: [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
