@@ -38,30 +38,30 @@ Write-Host "Stage 12 structural checks..."
 
 @(
     "Docs\STAGE-12-android-search.md",
-    "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\map\SearchMarker.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\repository\SearchRepository.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\local\ZylosDatabase.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\local\SearchHistoryDao.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\local\SearchHistoryEntity.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\ui\search\SearchDropdownAdapter.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\map\SearchMarker.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\repository\SearchRepository.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\local\ZylosDatabase.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\local\SearchHistoryDao.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\local\SearchHistoryEntity.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\ui\search\SearchDropdownAdapter.kt",
     "apps\android\app\src\main\res\layout\item_search_hit.xml",
     "apps\android\app\src\main\res\layout\item_search_history.xml",
-    "apps\android\app\src\test\java\rs\zylos\novisad\data\repository\SearchRepositoryTest.kt",
-    "apps\android\app\src\test\java\rs\zylos\novisad\viewmodel\SearchLogicTest.kt",
-    "apps\android\app\src\test\java\rs\zylos\novisad\data\local\SearchHistoryDaoTest.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\data\repository\SearchRepositoryTest.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\viewmodel\SearchLogicTest.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\data\local\SearchHistoryDaoTest.kt",
     "scripts\stage12-verify.ps1",
     "scripts\stage12-verify.sh"
 ) | ForEach-Object { Assert-File $_ }
 
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt" "v1/search"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "SEARCH_DEBOUNCE_MS = 150"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "SEARCH_MIN_LENGTH = 2"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "SEARCH_LIMIT = 10"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "FLY_DURATION_MS = 800"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\SearchMarker.kt" "selected-marker"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\local\SearchHistoryEntity.kt" "search_history"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt" "v1/search"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "SEARCH_DEBOUNCE_MS = 150"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "SEARCH_MIN_LENGTH = 2"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "SEARCH_LIMIT = 10"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "FLY_DURATION_MS = 800"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\SearchMarker.kt" "selected-marker"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\local\SearchHistoryEntity.kt" "search_history"
 Assert-Contains "apps\android\app\src\main\res\layout\activity_map.xml" "searchInput"
 Assert-Contains "apps\android\app\src\main\res\layout\activity_map.xml" "searchDropdown"
 Assert-Contains "apps\android\app\src\main\res\layout\activity_map.xml" "layout_gravity=`"bottom`""
@@ -69,8 +69,8 @@ Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Pretraga…"
 Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Ništa nije pronađeno"
 Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Pretraga privremeno nedostupna"
 Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Nedavno"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt" "TODO(stage-5)"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt" "SearchMarker.LAYER_ID"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt" "TODO(stage-5)"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt" "SearchMarker.LAYER_ID"
 Assert-Contains "apps\android\app\build.gradle" "androidx.room:room-runtime"
 
 Write-Host "Stage 12 API checks ($apiBase)..."

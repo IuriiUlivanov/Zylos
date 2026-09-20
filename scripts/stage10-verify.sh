@@ -16,12 +16,12 @@ need scripts/build-mbtiles.sh
 need docker-compose.mobile.yml
 need apps/android/settings.gradle
 need apps/android/app/build.gradle
-need apps/android/app/src/main/java/rs/zylos/novisad/MapActivity.kt
+need apps/android/app/src/main/java/rs/zylos/app/MapActivity.kt
 need apps/android/branding/icon-512.png
 
 contains infra/preview/style.json '"type": "fill-extrusion"'
 contains apps/android/app/build.gradle 'org.maplibre.gl:android-sdk'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/MapStyleFactory.kt 'mbtiles://'
+contains apps/android/app/src/main/java/rs/zylos/app/map/MapStyleFactory.kt 'mbtiles://'
 
 MBTILES="$ROOT/data/tiles/novi-sad.mbtiles"
 [ -s "$MBTILES" ] || { echo "Missing $MBTILES — run scripts/build-mbtiles.sh" >&2; exit 1; }

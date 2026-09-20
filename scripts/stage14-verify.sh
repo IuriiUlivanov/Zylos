@@ -18,9 +18,9 @@ need apps/api/src/types/route.ts
 need apps/api/src/routes/route.ts
 need apps/api/src/services/otpClient.ts
 need infra/otp/Dockerfile
-need apps/android/app/src/main/java/rs/zylos/novisad/data/api/RouteDto.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/map/RouteLayers.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/viewmodel/RouteLogic.kt
+need apps/android/app/src/main/java/rs/zylos/app/data/api/RouteDto.kt
+need apps/android/app/src/main/java/rs/zylos/app/map/RouteLayers.kt
+need apps/android/app/src/main/java/rs/zylos/app/viewmodel/RouteLogic.kt
 need scripts/stage14-verify.mjs
 need scripts/stage14-verify.sh
 
@@ -31,12 +31,12 @@ need data/gtfs/jgsp/stop_times.txt
 need data/gtfs/jgsp/trips.txt
 need data/gtfs/jgsp/calendar.txt
 
-contains apps/android/app/src/main/java/rs/zylos/novisad/data/api/ZylosApi.kt 'v1/route'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/MapDefaults.kt 'ROUTE_CLIENT_TIMEOUT_MS = 8_000'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/RouteLayers.kt 'route-walk'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/RouteLayers.kt 'lineDasharray'
+contains apps/android/app/src/main/java/rs/zylos/app/data/api/ZylosApi.kt 'v1/route'
+contains apps/android/app/src/main/java/rs/zylos/app/map/MapDefaults.kt 'ROUTE_CLIENT_TIMEOUT_MS = 8_000'
+contains apps/android/app/src/main/java/rs/zylos/app/map/RouteLayers.kt 'route-walk'
+contains apps/android/app/src/main/java/rs/zylos/app/map/RouteLayers.kt 'lineDasharray'
 contains apps/android/app/src/main/res/values/strings.xml 'Napravi rutu'
-contains apps/android/app/src/main/java/rs/zylos/novisad/MapActivity.kt 'TODO(stage-5)'
+contains apps/android/app/src/main/java/rs/zylos/app/MapActivity.kt 'TODO(stage-5)'
 contains docker-compose.yml 'container_name: otp'
 
 echo "Stage 14 API fixtures..."

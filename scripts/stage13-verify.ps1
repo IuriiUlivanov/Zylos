@@ -41,38 +41,38 @@ Write-Host "Stage 13 structural checks..."
     "Docs\design\MOBILE-POI-ZOOM.md",
     "infra\preview\style-mobile.json",
     "infra\preview\style.json",
-    "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\map\OrgPinLogic.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\map\OrgPins.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\map\SearchPins.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\map\MapStyleFactory.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\repository\OrgRepository.kt",
-    "apps\android\app\src\test\java\rs\zylos\novisad\map\OrgPinLogicTest.kt",
-    "apps\android\app\src\test\java\rs\zylos\novisad\data\repository\OrgRepositoryTest.kt",
-    "apps\android\app\src\test\java\rs\zylos\novisad\viewmodel\SearchMultiLogicTest.kt",
-    "apps\android\app\src\test\java\rs\zylos\novisad\map\MapStyleFactoryTest.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\map\OrgPinLogic.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\map\OrgPins.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\map\SearchPins.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\map\MapStyleFactory.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\repository\OrgRepository.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\map\OrgPinLogicTest.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\data\repository\OrgRepositoryTest.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\viewmodel\SearchMultiLogicTest.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\map\MapStyleFactoryTest.kt",
     "scripts\stage13-verify.ps1",
     "scripts\stage13-verify.sh"
 ) | ForEach-Object { Assert-File $_ }
 
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt" "v1/orgs"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt" "@Query(`"bbox`")"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\repository\OrgRepository.kt" "inBbox"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "ORG_PINS_DEBOUNCE_MS = 300"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "ORG_PINS_MIN_ZOOM = 15"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "ORG_PINS_LIMIT_MAX = 200"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "SEARCH_MULTI_MAX_PINS = 15"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "STYLE_ASSET = `"style-mobile.json`""
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\OrgPins.kt" "org-pins"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\SearchPins.kt" "search-pins"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\SearchMarker.kt" "selected-marker"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt" "v1/orgs"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt" "@Query(`"bbox`")"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\repository\OrgRepository.kt" "inBbox"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "ORG_PINS_DEBOUNCE_MS = 300"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "ORG_PINS_MIN_ZOOM = 15"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "ORG_PINS_LIMIT_MAX = 200"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "SEARCH_MULTI_MAX_PINS = 15"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "STYLE_ASSET = `"style-mobile.json`""
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\OrgPins.kt" "org-pins"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\SearchPins.kt" "search-pins"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\SearchMarker.kt" "selected-marker"
 Assert-Contains "apps\android\app\src\main\res\layout\activity_map.xml" "showAllOnMap"
 Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Prikaži sve na karti"
 Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Rezultati pretrage"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt" "TODO(stage-5)"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt" "OrgPins.CIRCLE_LAYER_ID"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\viewmodel\SearchLogic.kt" "isMultiEligible"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt" "TODO(stage-5)"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt" "OrgPins.CIRCLE_LAYER_ID"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\viewmodel\SearchLogic.kt" "isMultiEligible"
 Assert-Contains "apps\android\app\build.gradle" "style-mobile.json"
 Assert-Contains "infra\preview\style-mobile.json" "poi-dot"
 Assert-Contains "infra\preview\style-mobile.json" "poi-label"

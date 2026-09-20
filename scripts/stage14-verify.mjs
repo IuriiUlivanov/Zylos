@@ -67,9 +67,9 @@ async function main() {
   need("apps/api/src/services/otpClient.ts");
   need("infra/otp/Dockerfile");
   need("infra/otp/router-config.json");
-  need("apps/android/app/src/main/java/rs/zylos/novisad/data/api/RouteDto.kt");
-  need("apps/android/app/src/main/java/rs/zylos/novisad/map/RouteLayers.kt");
-  need("apps/android/app/src/main/java/rs/zylos/novisad/viewmodel/RouteLogic.kt");
+  need("apps/android/app/src/main/java/rs/zylos/app/data/api/RouteDto.kt");
+  need("apps/android/app/src/main/java/rs/zylos/app/map/RouteLayers.kt");
+  need("apps/android/app/src/main/java/rs/zylos/app/viewmodel/RouteLogic.kt");
   need("scripts/stage14-verify.ps1");
   need("scripts/stage14-verify.sh");
 
@@ -81,12 +81,12 @@ async function main() {
   const apiSrc = readFileSync(join(root, "apps/api/src/services/otpClient.ts"), "utf8");
   record("R4-timeout", apiSrc.includes("6000"), "ROUTE_UPSTREAM_TIMEOUT_MS = 6000");
   const androidSrc = readFileSync(
-    join(root, "apps/android/app/src/main/java/rs/zylos/novisad/map/MapDefaults.kt"),
+    join(root, "apps/android/app/src/main/java/rs/zylos/app/map/MapDefaults.kt"),
     "utf8",
   );
   record("R4-client", androidSrc.includes("ROUTE_CLIENT_TIMEOUT_MS = 8_000"), "8s client timeout");
   const layers = readFileSync(
-    join(root, "apps/android/app/src/main/java/rs/zylos/novisad/map/RouteLayers.kt"),
+    join(root, "apps/android/app/src/main/java/rs/zylos/app/map/RouteLayers.kt"),
     "utf8",
   );
   record("M6-walk", layers.includes("route-walk"), "walk layer");

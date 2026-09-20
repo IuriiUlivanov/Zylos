@@ -32,15 +32,15 @@ Write-Host "Stage 14 structural checks..."
     "infra\otp\router-config.json",
     "infra\otp\build-config.json",
     "infra\otp\otp-config.json",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\api\RouteDto.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\repository\RouteRepository.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\map\RouteLayers.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\viewmodel\RouteLogic.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\api\RouteDto.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\repository\RouteRepository.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\map\RouteLayers.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\viewmodel\RouteLogic.kt",
     "apps\android\app\src\main\res\layout\route_chrome.xml",
-    "apps\android\app\src\test\java\rs\zylos\novisad\data\api\RouteDtoTest.kt",
-    "apps\android\app\src\test\java\rs\zylos\novisad\map\RouteLogicTest.kt",
-    "apps\android\app\src\test\java\rs\zylos\novisad\viewmodel\RouteModeTest.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\data\api\RouteDtoTest.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\map\RouteLogicTest.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\viewmodel\RouteModeTest.kt",
     "scripts\stage14-verify.ps1",
     "scripts\stage14-verify.sh",
     "scripts\stage14-verify.mjs"
@@ -55,14 +55,14 @@ Write-Host "Stage 14 structural checks..."
     "data\gtfs\jgsp\calendar.txt"
 ) | ForEach-Object { Assert-File $_ }
 
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt" "v1/route"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "ROUTE_CLIENT_TIMEOUT_MS = 8_000"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\RouteLayers.kt" "route-walk"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\RouteLayers.kt" "route-transit"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\RouteLayers.kt" "lineDasharray"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt" "v1/route"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "ROUTE_CLIENT_TIMEOUT_MS = 8_000"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\RouteLayers.kt" "route-walk"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\RouteLayers.kt" "route-transit"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\RouteLayers.kt" "lineDasharray"
 Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Napravi rutu"
 Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Tačke moraju biti u Novom Sadu"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt" "TODO(stage-5)"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt" "TODO(stage-5)"
 Assert-Contains "docker-compose.yml" "container_name: otp"
 Assert-Contains "apps\api\src\services\otpClient.ts" "ROUTE_UPSTREAM_TIMEOUT_MS = 6_000"
 

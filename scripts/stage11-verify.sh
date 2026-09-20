@@ -21,26 +21,26 @@ http_code() {
 echo "Stage 11 structural checks..."
 
 need Docs/STAGE-11-android-building.md
-need apps/android/app/src/main/java/rs/zylos/novisad/MapActivity.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/map/BuildingHighlight.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/data/api/ZylosApi.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/data/api/ApiClient.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/data/repository/BuildingRepository.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/viewmodel/MapViewModel.kt
-need apps/android/app/src/test/java/rs/zylos/novisad/map/BuildingHighlightTest.kt
+need apps/android/app/src/main/java/rs/zylos/app/MapActivity.kt
+need apps/android/app/src/main/java/rs/zylos/app/map/BuildingHighlight.kt
+need apps/android/app/src/main/java/rs/zylos/app/data/api/ZylosApi.kt
+need apps/android/app/src/main/java/rs/zylos/app/data/api/ApiClient.kt
+need apps/android/app/src/main/java/rs/zylos/app/data/repository/BuildingRepository.kt
+need apps/android/app/src/main/java/rs/zylos/app/viewmodel/MapViewModel.kt
+need apps/android/app/src/test/java/rs/zylos/app/map/BuildingHighlightTest.kt
 need scripts/stage11-verify.sh
 
 contains apps/android/app/build.gradle 'com.squareup.retrofit2:retrofit'
-contains apps/android/app/src/main/java/rs/zylos/novisad/data/api/ZylosApi.kt 'v1/buildings/at'
-contains apps/android/app/src/main/java/rs/zylos/novisad/data/api/ZylosApi.kt 'v1/buildings/{id}'
-contains apps/android/app/src/main/java/rs/zylos/novisad/data/api/ZylosApi.kt 'v1/orgs/{id}'
-contains apps/android/app/src/main/java/rs/zylos/novisad/MapActivity.kt 'addOnMapClickListener'
-contains apps/android/app/src/main/java/rs/zylos/novisad/MapActivity.kt 'TODO(stage-5)'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/BuildingHighlight.kt 'selected-building'
+contains apps/android/app/src/main/java/rs/zylos/app/data/api/ZylosApi.kt 'v1/buildings/at'
+contains apps/android/app/src/main/java/rs/zylos/app/data/api/ZylosApi.kt 'v1/buildings/{id}'
+contains apps/android/app/src/main/java/rs/zylos/app/data/api/ZylosApi.kt 'v1/orgs/{id}'
+contains apps/android/app/src/main/java/rs/zylos/app/MapActivity.kt 'addOnMapClickListener'
+contains apps/android/app/src/main/java/rs/zylos/app/MapActivity.kt 'TODO(stage-5)'
+contains apps/android/app/src/main/java/rs/zylos/app/map/BuildingHighlight.kt 'selected-building'
 contains apps/android/app/src/main/res/layout/activity_map.xml 'BottomSheetBehavior'
 contains apps/android/app/src/main/res/values/strings.xml 'Nema zgrade na ovoj tački'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/MapDefaults.kt 'SHEET_ANIMATION_MS = 250'
-contains apps/android/app/src/main/java/rs/zylos/novisad/MapActivity.kt 'isAttributionEnabled = true'
+contains apps/android/app/src/main/java/rs/zylos/app/map/MapDefaults.kt 'SHEET_ANIMATION_MS = 250'
+contains apps/android/app/src/main/java/rs/zylos/app/MapActivity.kt 'isAttributionEnabled = true'
 
 echo "Stage 11 API checks ($API)..."
 

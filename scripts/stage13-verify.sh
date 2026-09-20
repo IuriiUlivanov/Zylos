@@ -22,23 +22,23 @@ need Docs/STAGE-13-android-poi.md
 need Docs/design/MOBILE-POI-ZOOM.md
 need infra/preview/style-mobile.json
 need infra/preview/style.json
-need apps/android/app/src/main/java/rs/zylos/novisad/map/OrgPinLogic.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/map/OrgPins.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/map/SearchPins.kt
-need apps/android/app/src/test/java/rs/zylos/novisad/map/OrgPinLogicTest.kt
-need apps/android/app/src/test/java/rs/zylos/novisad/viewmodel/SearchMultiLogicTest.kt
+need apps/android/app/src/main/java/rs/zylos/app/map/OrgPinLogic.kt
+need apps/android/app/src/main/java/rs/zylos/app/map/OrgPins.kt
+need apps/android/app/src/main/java/rs/zylos/app/map/SearchPins.kt
+need apps/android/app/src/test/java/rs/zylos/app/map/OrgPinLogicTest.kt
+need apps/android/app/src/test/java/rs/zylos/app/viewmodel/SearchMultiLogicTest.kt
 need scripts/stage13-verify.sh
 
-contains apps/android/app/src/main/java/rs/zylos/novisad/data/api/ZylosApi.kt 'v1/orgs'
-contains apps/android/app/src/main/java/rs/zylos/novisad/data/repository/OrgRepository.kt 'inBbox'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/MapDefaults.kt 'ORG_PINS_DEBOUNCE_MS = 300'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/MapDefaults.kt 'ORG_PINS_MIN_ZOOM = 15'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/MapDefaults.kt 'SEARCH_MULTI_MAX_PINS = 15'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/MapDefaults.kt 'style-mobile.json'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/OrgPins.kt 'org-pins'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/SearchPins.kt 'search-pins'
+contains apps/android/app/src/main/java/rs/zylos/app/data/api/ZylosApi.kt 'v1/orgs'
+contains apps/android/app/src/main/java/rs/zylos/app/data/repository/OrgRepository.kt 'inBbox'
+contains apps/android/app/src/main/java/rs/zylos/app/map/MapDefaults.kt 'ORG_PINS_DEBOUNCE_MS = 300'
+contains apps/android/app/src/main/java/rs/zylos/app/map/MapDefaults.kt 'ORG_PINS_MIN_ZOOM = 15'
+contains apps/android/app/src/main/java/rs/zylos/app/map/MapDefaults.kt 'SEARCH_MULTI_MAX_PINS = 15'
+contains apps/android/app/src/main/java/rs/zylos/app/map/MapDefaults.kt 'style-mobile.json'
+contains apps/android/app/src/main/java/rs/zylos/app/map/OrgPins.kt 'org-pins'
+contains apps/android/app/src/main/java/rs/zylos/app/map/SearchPins.kt 'search-pins'
 contains apps/android/app/src/main/res/values/strings.xml 'Prikaži sve na karti'
-contains apps/android/app/src/main/java/rs/zylos/novisad/MapActivity.kt 'TODO(stage-5)'
+contains apps/android/app/src/main/java/rs/zylos/app/MapActivity.kt 'TODO(stage-5)'
 contains apps/android/app/build.gradle 'style-mobile.json'
 contains infra/preview/style-mobile.json 'poi-dot'
 contains infra/preview/style-mobile.json 'poi-label'

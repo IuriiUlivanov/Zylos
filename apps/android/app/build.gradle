@@ -26,11 +26,11 @@ def prepareMapAssets = tasks.register("prepareMapAssets", Copy) {
 }
 
 android {
-    namespace "rs.zylos.novisad"
+    namespace "rs.zylos.app"
     compileSdk 35
 
     defaultConfig {
-        applicationId "rs.zylos.novisad"
+        applicationId "rs.zylos.app"
         minSdk 24
         targetSdk 35
         versionCode 1

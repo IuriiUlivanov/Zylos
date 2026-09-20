@@ -19,26 +19,26 @@ http_code() {
 echo "Stage 12 structural checks..."
 
 need Docs/STAGE-12-android-search.md
-need apps/android/app/src/main/java/rs/zylos/novisad/MapActivity.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/map/SearchMarker.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/data/api/ZylosApi.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/data/repository/SearchRepository.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/data/local/ZylosDatabase.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/data/local/SearchHistoryDao.kt
-need apps/android/app/src/main/java/rs/zylos/novisad/ui/search/SearchDropdownAdapter.kt
-need apps/android/app/src/test/java/rs/zylos/novisad/viewmodel/SearchLogicTest.kt
-need apps/android/app/src/test/java/rs/zylos/novisad/data/local/SearchHistoryDaoTest.kt
+need apps/android/app/src/main/java/rs/zylos/app/MapActivity.kt
+need apps/android/app/src/main/java/rs/zylos/app/map/SearchMarker.kt
+need apps/android/app/src/main/java/rs/zylos/app/data/api/ZylosApi.kt
+need apps/android/app/src/main/java/rs/zylos/app/data/repository/SearchRepository.kt
+need apps/android/app/src/main/java/rs/zylos/app/data/local/ZylosDatabase.kt
+need apps/android/app/src/main/java/rs/zylos/app/data/local/SearchHistoryDao.kt
+need apps/android/app/src/main/java/rs/zylos/app/ui/search/SearchDropdownAdapter.kt
+need apps/android/app/src/test/java/rs/zylos/app/viewmodel/SearchLogicTest.kt
+need apps/android/app/src/test/java/rs/zylos/app/data/local/SearchHistoryDaoTest.kt
 need scripts/stage12-verify.sh
 
-contains apps/android/app/src/main/java/rs/zylos/novisad/data/api/ZylosApi.kt 'v1/search'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/MapDefaults.kt 'SEARCH_DEBOUNCE_MS = 150'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/MapDefaults.kt 'SEARCH_MIN_LENGTH = 2'
-contains apps/android/app/src/main/java/rs/zylos/novisad/map/SearchMarker.kt 'selected-marker'
-contains apps/android/app/src/main/java/rs/zylos/novisad/data/local/SearchHistoryEntity.kt 'search_history'
+contains apps/android/app/src/main/java/rs/zylos/app/data/api/ZylosApi.kt 'v1/search'
+contains apps/android/app/src/main/java/rs/zylos/app/map/MapDefaults.kt 'SEARCH_DEBOUNCE_MS = 150'
+contains apps/android/app/src/main/java/rs/zylos/app/map/MapDefaults.kt 'SEARCH_MIN_LENGTH = 2'
+contains apps/android/app/src/main/java/rs/zylos/app/map/SearchMarker.kt 'selected-marker'
+contains apps/android/app/src/main/java/rs/zylos/app/data/local/SearchHistoryEntity.kt 'search_history'
 contains apps/android/app/src/main/res/layout/activity_map.xml 'searchInput'
 contains apps/android/app/src/main/res/values/strings.xml 'Ništa nije pronađeno'
 contains apps/android/app/src/main/res/values/strings.xml 'Pretraga privremeno nedostupna'
-contains apps/android/app/src/main/java/rs/zylos/novisad/MapActivity.kt 'TODO(stage-5)'
+contains apps/android/app/src/main/java/rs/zylos/app/MapActivity.kt 'TODO(stage-5)'
 contains apps/android/app/build.gradle 'androidx.room:room-runtime'
 
 echo "Stage 12 API checks ($API)..."

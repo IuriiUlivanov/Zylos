@@ -40,34 +40,34 @@ Write-Host "Stage 11 structural checks..."
 
 @(
     "Docs\STAGE-11-android-building.md",
-    "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\map\BuildingHighlight.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ApiClient.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\repository\BuildingRepository.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\repository\OrgRepository.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\viewmodel\MapViewModel.kt",
-    "apps\android\app\src\test\java\rs\zylos\novisad\map\BuildingHighlightTest.kt",
-    "apps\android\app\src\test\java\rs\zylos\novisad\data\api\ApiDtoContractTest.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\map\BuildingHighlight.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\api\ApiClient.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\repository\BuildingRepository.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\repository\OrgRepository.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\viewmodel\MapViewModel.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\map\BuildingHighlightTest.kt",
+    "apps\android\app\src\test\java\rs\zylos\app\data\api\ApiDtoContractTest.kt",
     "scripts\stage11-verify.ps1",
     "scripts\stage11-verify.sh"
 ) | ForEach-Object { Assert-File $_ }
 
 Assert-Contains "apps\android\app\build.gradle" "com.squareup.retrofit2:retrofit"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ApiClient.kt" "BuildConfig.API_URL" 
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt" "v1/buildings/at"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt" "v1/buildings/{id}"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\api\ZylosApi.kt" "v1/orgs/{id}"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt" "addOnMapClickListener"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt" "TODO(stage-5)"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\BuildingHighlight.kt" "selected-building"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\BuildingHighlight.kt" "selected-building-outline"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\api\ApiClient.kt" "BuildConfig.API_URL" 
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt" "v1/buildings/at"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt" "v1/buildings/{id}"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt" "v1/orgs/{id}"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt" "addOnMapClickListener"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt" "TODO(stage-5)"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\BuildingHighlight.kt" "selected-building"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\BuildingHighlight.kt" "selected-building-outline"
 Assert-Contains "apps\android\app\src\main\res\layout\activity_map.xml" "BottomSheetBehavior"
 Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Nema zgrade na ovoj tački"
 Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Van grada Novi Sad"
 Assert-Contains "apps\android\app\src\main\res\values\strings.xml" "Nema veze sa serverom"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapDefaults.kt" "SHEET_ANIMATION_MS = 250"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt" "isAttributionEnabled = true"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapDefaults.kt" "SHEET_ANIMATION_MS = 250"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt" "isAttributionEnabled = true"
 
 Write-Host "Stage 11 API checks ($apiBase)..."
 

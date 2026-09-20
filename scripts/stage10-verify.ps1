@@ -28,21 +28,21 @@ Write-Host "Stage 10 structural checks..."
     "docker-compose.mobile.yml",
     "apps\android\settings.gradle",
     "apps\android\app\build.gradle",
-    "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\map\MapStyleFactory.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\api\SearchDto.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\api\BuildingDto.kt",
-    "apps\android\app\src\main\java\rs\zylos\novisad\data\api\OrgDto.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\map\MapStyleFactory.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\api\SearchDto.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\api\BuildingDto.kt",
+    "apps\android\app\src\main\java\rs\zylos\app\data\api\OrgDto.kt",
     "apps\android\app\src\main\res\mipmap-anydpi-v26\ic_launcher.xml",
     "apps\android\branding\icon-512.png"
 ) | ForEach-Object { Assert-File $_ }
 
 Assert-Contains "infra\preview\style.json" '"type": "fill-extrusion"'
 Assert-Contains "apps\android\app\build.gradle" "org.maplibre.gl:android-sdk"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\MapActivity.kt" "setMaxPitchPreference"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\map\MapStyleFactory.kt" "mbtiles://"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\api\SearchDto.kt" "building_id"
-Assert-Contains "apps\android\app\src\main\java\rs\zylos\novisad\data\api\OrgDto.kt" "category_slug"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt" "setMaxPitchPreference"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\map\MapStyleFactory.kt" "mbtiles://"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\api\SearchDto.kt" "building_id"
+Assert-Contains "apps\android\app\src\main\java\rs\zylos\app\data\api\OrgDto.kt" "category_slug"
 
 $mbtiles = Join-Path $root "data\tiles\novi-sad.mbtiles"
 $pmtiles = Join-Path $root "data\tiles\novi-sad.pmtiles"

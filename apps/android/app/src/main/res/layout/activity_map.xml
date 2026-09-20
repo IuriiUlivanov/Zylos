@@ -12,7 +12,7 @@
         android:layout_height="match_parent"
         android:contentDescription="@string/map_cd" />
 
-    <rs.zylos.novisad.ui.sheet.PassThroughCoordinatorLayout
+    <rs.zylos.app.ui.sheet.PassThroughCoordinatorLayout
         android:id="@+id/sheetHost"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -190,7 +190,7 @@
             </androidx.core.widget.NestedScrollView>
         </FrameLayout>
         </LinearLayout>
-    </rs.zylos.novisad.ui.sheet.PassThroughCoordinatorLayout>
+    </rs.zylos.app.ui.sheet.PassThroughCoordinatorLayout>
 
     <LinearLayout
         android:id="@+id/searchDock"
@@ -246,7 +246,7 @@
                     android:textSize="14sp"
                     android:visibility="gone" />
 
-                <rs.zylos.novisad.ui.search.MaxHeightRecyclerView
+                <rs.zylos.app.ui.search.MaxHeightRecyclerView
                     android:id="@+id/searchDropdown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
