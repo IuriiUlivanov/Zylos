@@ -283,12 +283,12 @@ class MapViewModel(
     }
 
     fun onMapClick(lon: Double, lat: Double) {
-        if (_state.value.dropdownOpen) {
-            _state.value = _state.value.copy(searchFocused = false, routeFieldFocus = null)
-            return
-        }
         if (_state.value.routePickField != null) {
             onMapPicked(_state.value.routePickField!!, lon, lat)
+            return
+        }
+        if (_state.value.dropdownOpen) {
+            _state.value = _state.value.copy(searchFocused = false, routeFieldFocus = null)
             return
         }
         if (_state.value.routeMode == MapRouteMode.Result ||
@@ -427,6 +427,7 @@ class MapViewModel(
                 bottomTab = BottomTab.Search,
                 routePickField = null,
                 routeFieldFocus = null,
+                routeSearchField = null,
                 routeHits = emptyList(),
             )
             if (_state.value.routeMode == MapRouteMode.Idle) {
@@ -461,6 +462,7 @@ class MapViewModel(
                 routeError = null,
                 routePickField = null,
                 routeFieldFocus = null,
+                routeSearchField = null,
             )
             when (val result = routes.planTransit(LonLat(from.lon, from.lat), LonLat(to.lon, to.lat))) {
                 is RouteResult.Ok -> {
@@ -509,6 +511,7 @@ class MapViewModel(
             routeToJson = null,
             routePickField = null,
             routeFieldFocus = null,
+            routeSearchField = null,
             routeHits = emptyList(),
             bounds = null,
         )
@@ -526,16 +529,26 @@ class MapViewModel(
     fun onRouteFieldFocus(field: RouteField?) {
         _state.value = _state.value.copy(
             routeFieldFocus = field,
+            routeSearchField = field ?: _state.value.routeSearchField,
             searchFocused = false,
-            routeHits = if (field == null) emptyList() else _state.value.routeHits,
         )
     }
 
     fun onRouteQueryChange(field: RouteField, text: String) {
         routeSearchJob?.cancel()
         _state.value = when (field) {
-            RouteField.From -> _state.value.copy(routeFromQuery = text, routeError = null)
-            RouteField.To -> _state.value.copy(routeToQuery = text, routeError = null)
+            RouteField.From -> _state.value.copy(
+                routeFromQuery = text,
+                routeError = null,
+                routeSearchField = field,
+                routePickField = null,
+            )
+            RouteField.To -> _state.value.copy(
+                routeToQuery = text,
+                routeError = null,
+                routeSearchField = field,
+                routePickField = null,
+            )
         }
         if (!SearchLogic.shouldRequest(text)) {
             routeSearchGeneration += 1
@@ -565,16 +578,17 @@ class MapViewModel(
         }
     }
 
-    fun onSelectRouteHit(field: RouteField, hit: SearchHit) {
+    fun onSelectRouteHit(hit: SearchHit) {
         routeSearchJob?.cancel()
         routeSearchGeneration += 1
         val point = RoutePoint(hit.lon, hit.lat, hit.label)
-        assignRoutePoint(field, point)
+        assignRoutePoint(activeRouteFieldForSearch(), point)
     }
 
     fun onNaKartu(field: RouteField) {
         _state.value = _state.value.copy(
             routePickField = field,
+            routeSearchField = field,
             routeFieldFocus = null,
             searchFocused = false,
             routeHits = emptyList(),
@@ -589,8 +603,7 @@ class MapViewModel(
         if (_state.value.bottomTab != BottomTab.Route && _state.value.routeMode == MapRouteMode.Idle) {
             return
         }
-        val field = _state.value.routePickField ?: RouteField.To
-        onMapPicked(field, lon, lat)
+        onMapPicked(activeRouteFieldForMap(), lon, lat)
     }
 
     fun onMyLocation(lon: Double, lat: Double) {
@@ -610,6 +623,7 @@ class MapViewModel(
             routeFromQuery = nextFrom?.label ?: _state.value.routeFromQuery,
             searchFocused = false,
             routeFieldFocus = null,
+            routeSearchField = null,
             routeHits = emptyList(),
         )
     }
@@ -634,6 +648,19 @@ class MapViewModel(
         return null
     }
 
+    private fun activeRouteFieldForSearch(): RouteField {
+        return _state.value.routeSearchField
+            ?: _state.value.routeFieldFocus
+            ?: RouteField.To
+    }
+
+    private fun activeRouteFieldForMap(): RouteField {
+        return _state.value.routePickField
+            ?: _state.value.routeFieldFocus
+            ?: _state.value.routeSearchField
+            ?: RouteField.To
+    }
+
     private fun assignRoutePoint(field: RouteField, point: RoutePoint) {
         val wasResult = _state.value.routeMode == MapRouteMode.Result
         _state.value = when (field) {
@@ -642,6 +669,7 @@ class MapViewModel(
                 routeFromQuery = point.label,
                 routePickField = null,
                 routeFieldFocus = null,
+                routeSearchField = null,
                 routeHits = emptyList(),
                 routeMode = if (wasResult) MapRouteMode.Planning else {
                     if (_state.value.routeMode == MapRouteMode.Idle) MapRouteMode.Planning else _state.value.routeMode
@@ -653,6 +681,7 @@ class MapViewModel(
                 routeToQuery = point.label,
                 routePickField = null,
                 routeFieldFocus = null,
+                routeSearchField = null,
                 routeHits = emptyList(),
                 routeMode = if (wasResult) MapRouteMode.Planning else {
                     if (_state.value.routeMode == MapRouteMode.Idle) MapRouteMode.Planning else _state.value.routeMode

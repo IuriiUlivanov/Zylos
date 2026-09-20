@@ -66,6 +66,7 @@ data class MapUiState(
     val routeFrom: RoutePoint? = null,
     val routeTo: RoutePoint? = null,
     val routePickField: RouteField? = null,
+    val routeSearchField: RouteField? = null,
     val routeLoading: Boolean = false,
     val routeError: RouteUiError? = null,
     val routeItineraries: List<RouteItinerary> = emptyList(),
@@ -101,10 +102,13 @@ data class MapUiState(
     val haptic: Boolean = false,
     val generation: Int = 0,
 ) {
+    val routeInputField: RouteField?
+        get() = routeFieldFocus ?: routeSearchField
+
     val dropdownOpen: Boolean
         get() = when {
-            bottomTab == BottomTab.Route && routeFieldFocus != null -> {
-                val q = if (routeFieldFocus == RouteField.From) routeFromQuery else routeToQuery
+            bottomTab == BottomTab.Route && routeInputField != null -> {
+                val q = if (routeInputField == RouteField.From) routeFromQuery else routeToQuery
                 q.length >= MapDefaults.SEARCH_MIN_LENGTH
             }
             else -> searchFocused && (

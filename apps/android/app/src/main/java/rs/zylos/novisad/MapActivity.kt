@@ -134,8 +134,7 @@ class MapActivity : AppCompatActivity() {
         onHit = { hit ->
             hideKeyboard()
             if (viewModel.state.value.bottomTab == BottomTab.Route) {
-                val field = viewModel.state.value.routeFieldFocus ?: RouteField.To
-                viewModel.onSelectRouteHit(field, hit)
+                viewModel.onSelectRouteHit(hit)
             } else {
                 viewModel.onSelectHit(hit)
             }
@@ -391,8 +390,8 @@ class MapActivity : AppCompatActivity() {
 
         val showingHistory = state.bottomTab == BottomTab.Search &&
             state.searchFocused && state.query.isEmpty() && state.history.isNotEmpty()
-        val showingLive = if (state.bottomTab == BottomTab.Route && state.routeFieldFocus != null) {
-            val q = if (state.routeFieldFocus == RouteField.From) state.routeFromQuery else state.routeToQuery
+        val showingLive = if (state.bottomTab == BottomTab.Route && state.routeInputField != null) {
+            val q = if (state.routeInputField == RouteField.From) state.routeFromQuery else state.routeToQuery
             q.length >= MapDefaults.SEARCH_MIN_LENGTH && !state.routeSearchLoading
         } else {
             state.searchFocused && state.query.length >= MapDefaults.SEARCH_MIN_LENGTH && !loading
@@ -1088,7 +1087,9 @@ class MapActivity : AppCompatActivity() {
                         }
                         mapLibre.addOnMapClickListener { latLng ->
                             hideKeyboard()
-                            if (viewModel.state.value.dropdownOpen) {
+                            if (viewModel.state.value.dropdownOpen &&
+                                viewModel.state.value.routePickField == null
+                            ) {
                                 viewModel.onSearchFocusChanged(false)
                                 viewModel.onRouteFieldFocus(null)
                                 binding.searchInput.clearFocus()

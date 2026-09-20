@@ -19,6 +19,8 @@ import rs.zylos.novisad.data.api.RouteItinerary
 import rs.zylos.novisad.data.api.RouteLeg
 import rs.zylos.novisad.data.api.RouteLineString
 import rs.zylos.novisad.data.api.RouteResponse
+import rs.zylos.novisad.data.api.SearchHit
+import rs.zylos.novisad.data.api.SearchKind
 import rs.zylos.novisad.data.repository.BuildingAtResult
 import rs.zylos.novisad.data.repository.BuildingDetailResult
 import rs.zylos.novisad.data.repository.BuildingRepository
@@ -103,6 +105,28 @@ class RouteModeTest {
     }
 
     @Test
+    fun selectRouteHitUsesSearchFieldAfterFocusLost() = runTest(dispatcher) {
+        val vm = MapViewModel(IdleBuildings, IdleOrgs)
+        vm.onRouteFieldFocus(RouteField.From)
+        vm.onRouteQueryChange(RouteField.From, "Trg slobode")
+        vm.onRouteFieldFocus(null)
+        vm.onSelectRouteHit(sampleHit("Trg slobode"))
+        assertEquals("Trg slobode", vm.state.value.routeFrom?.label)
+        assertNull(vm.state.value.routeTo)
+    }
+
+    @Test
+    fun mapPickUsesPickFieldAfterFocusLost() = runTest(dispatcher) {
+        val vm = MapViewModel(IdleBuildings, IdleOrgs)
+        vm.onRouteFieldFocus(RouteField.From)
+        vm.onNaKartu(RouteField.From)
+        vm.onRouteFieldFocus(RouteField.To)
+        vm.onMapClick(19.845, 45.255)
+        assertEquals("45.25500, 19.84500", vm.state.value.routeFrom?.label)
+        assertNull(vm.state.value.routeTo)
+    }
+
+    @Test
     fun clearRouteReturnsIdleAndClearsLayers() = runTest(dispatcher) {
         val vm = MapViewModel(IdleBuildings, IdleOrgs, routes = FakeRoutes { _, _ -> RouteResult.Ok(sampleResponse("x")) })
         vm.onMapPicked(RouteField.From, 19.845, 45.255, "A")
@@ -154,6 +178,15 @@ class RouteModeTest {
         360,
         280.0,
         RouteLineString("LineString", listOf(listOf(19.845, 45.255), listOf(19.844, 45.254))),
+    )
+
+    private fun sampleHit(label: String) = SearchHit(
+        id = "hit-1",
+        kind = SearchKind.address,
+        label = label,
+        lat = 45.255,
+        lon = 19.845,
+        building_id = null,
     )
 
     private fun bus(tag: String) = RouteLeg(
