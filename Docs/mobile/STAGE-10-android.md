@@ -1,6 +1,6 @@
 # Этап 10. Нативный Android: офлайн-карта MapLibre Native
 
-Связан с [MOBILE.md](MOBILE.md), [PLAN.md](PLAN.md) (пункт 10 — Capacitor **заменён**), [ARCHITECTURE.md](ARCHITECTURE.md), [PERFORMANCE.md](PERFORMANCE.md).
+Связан с [MOBILE.md](MOBILE.md), [PLAN.md](../PLAN.md) (пункт 10 — Capacitor **заменён**), [ARCHITECTURE.md](../ARCHITECTURE.md), [PERFORMANCE.md](../PERFORMANCE.md).
 
 Цель: появиться **`apps/android`** — Kotlin + MapLibre GL Native. На экране карта Нови-Сада из локального **MBTiles**, тот же Style JSON что `infra/preview/style.json` (`fill-extrusion`, glyphs). Веб (`apps/web`) **не трогаем**. Бэкенд остаётся Fastify `/v1` — **не** переписывать на Go/Rust. Pelias, Google Places, Capacitor — не поднимать.
 

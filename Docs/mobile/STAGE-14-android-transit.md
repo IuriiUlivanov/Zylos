@@ -1,6 +1,6 @@
 # Этап 14. Android: маршрут transit (+ POST /v1/route)
 
-Связан с [MOBILE.md](MOBILE.md) (§2.6, §6 этап 5.2), [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md), [design/route/README.md](design/route/README.md) (макеты v2), [design/object-card/versions/v2-bottom-tabs-route-panel.md](design/object-card/versions/v2-bottom-tabs-route-panel.md), [STAGE-13-android-poi.md](STAGE-13-android-poi.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PERFORMANCE.md](PERFORMANCE.md).
+Связан с [MOBILE.md](MOBILE.md) (§2.6, §6 этап 5.2), [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md), [design/route/README.md](design/route/README.md) (макеты v2), [design/object-card/versions/v2-bottom-tabs-route-panel.md](design/object-card/versions/v2-bottom-tabs-route-panel.md), [STAGE-13-android-poi.md](STAGE-13-android-poi.md), [ARCHITECTURE.md](../ARCHITECTURE.md), [PERFORMANCE.md](../PERFORMANCE.md).
 
 Цель: пользователь строит маршрут **A→B общественным транспортом JGSP** на Android — линия на карте (автобус сплошная, пеший участок пунктир), номера линий, время и шаги в bottom sheet. Для этого этап **закрывает контракт** `POST /v1/route` mode=`transit` в `apps/api` (OTP2) **и** UI в `apps/android`. Офлайн-карта MBTiles **остаётся**; маршрут без сети недоступен.
 
@@ -22,7 +22,7 @@
 
 STAGE-13 закрыл browse POI и Search Multi. Продукт v1 по [MOBILE.md](MOBILE.md) обязан давать **маршрут общественным транспортом** — это ключевое отличие 2ГИС от «просто карты».
 
-Без этого этапа OTP/GTFS и Fastify `/route` не проверяются end-to-end на телефоне. Пороги **R4, R7, R8, R9** из [PERFORMANCE.md](PERFORMANCE.md) становятся обязательными для сценария «выбрал A и B → линия на карте → шаги в sheet».
+Без этого этапа OTP/GTFS и Fastify `/route` не проверяются end-to-end на телефоне. Пороги **R4, R7, R8, R9** из [PERFORMANCE.md](../PERFORMANCE.md) становятся обязательными для сценария «выбрал A и B → линия на карте → шаги в sheet».
 
 После STAGE-14 можно переходить к оптимизации и приёмке — [MOBILE.md](MOBILE.md) §6 этап 6 (профiling T4, размер APK/MBTiles).
 
@@ -412,7 +412,7 @@ Verify:
 - `infra/otp/**` — конфиг роутера
 - `scripts/stage14-verify.*`
 - `apps/android/README.md`
-- Документы: этот файл; ссылки в [MOBILE.md](MOBILE.md), [PLAN.md](PLAN.md)
+- Документы: этот файл; ссылки в [MOBILE.md](MOBILE.md), [PLAN.md](../PLAN.md)
 
 **Не менять:** `apps/web/**`, Meilisearch settings, PostGIS schema (кроме использования `city_boundary`), MBTiles, `infra/preview/style.json` / `style-mobile.json` (route layers — runtime GeoJSON, не style.json v1).
 
@@ -421,7 +421,7 @@ Verify:
 ## 8. Prompt для агента (один чат = этот этап)
 
 ```text
-Сделай STAGE-14 строго по Docs/STAGE-14-android-transit.md.
+Сделай STAGE-14 строго по Docs/mobile/STAGE-14-android-transit.md.
 
 Нужны: POST /v1/route mode=transit (OTP2, GTFS JGSP, R4/R8/R7);
 Android Route mode (Od/Do, search + long-press, object → Route tab → Do);

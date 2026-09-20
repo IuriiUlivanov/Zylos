@@ -1,6 +1,6 @@
 # Этап 12. Android: autocomplete поиска
 
-Связан с [MOBILE.md](MOBILE.md) (§6 этап 5.1), [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md) (§4.1–4.2 search UI), [STAGE-11-android-building.md](STAGE-11-android-building.md), [STAGE-03-meilisearch.md](STAGE-03-meilisearch.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PERFORMANCE.md](PERFORMANCE.md).
+Связан с [MOBILE.md](MOBILE.md) (§6 этап 5.1), [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md) (§4.1–4.2 search UI), [STAGE-11-android-building.md](STAGE-11-android-building.md), [STAGE-03-meilisearch.md](../STAGE-03-meilisearch.md), [ARCHITECTURE.md](../ARCHITECTURE.md), [PERFORMANCE.md](../PERFORMANCE.md).
 
 Цель: **`apps/android`** получает рабочий **autocomplete** — строка поиска **снизу** экрана (2GIS Android, [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md) §2), `GET /v1/search` (Meilisearch), dropdown **вверх** от search card, выбор hit → `easeTo` + маркер + bottom sheet **над** поиском (здание / org / peek). **Room** — кэш последних запросов (офлайн только история, не индекс). Офлайн-карта MBTiles **остаётся**; без сети поиск показывает ошибку, карта жива.
 
@@ -8,7 +8,7 @@
 
 - [STAGE-11-android-building.md](STAGE-11-android-building.md) закрыт: `scripts/stage11-verify.ps1` → exit **0**
 - `docker compose` → `postgis`, `api`, **`meilisearch`** running; индекс проиндексирован (`scripts/index-meilisearch.mjs`)
-- `GET /v1/search` отвечает локально; фикстуры F1–F7 — [STAGE-03-meilisearch.md](STAGE-03-meilisearch.md) §3.6
+- `GET /v1/search` отвечает локально; фикстуры F1–F7 — [STAGE-03-meilisearch.md](../STAGE-03-meilisearch.md) §3.6
 - Kotlin DTO `SearchDto.kt` зеркалит `apps/api/src/types/search.ts` — **форму JSON не менять**
 - Bottom sheet building / organization из STAGE-11 **переиспользовать**, не дублировать
 
@@ -22,7 +22,7 @@
 
 STAGE-11 доказал «тап по дому → список org». Пользователь 2ГИС ожидает: **набрал «апотека» или «бulevar 47» — увидел подсказки и перешёл к объекту**.
 
-Без этого этапа Meilisearch не проверяется end-to-end на Android. Пороги **S1–S4** из [PERFORMANCE.md](PERFORMANCE.md) становятся обязательными для мобильного сценария «ввод → список → карточка».
+Без этого этапа Meilisearch не проверяется end-to-end на Android. Пороги **S1–S4** из [PERFORMANCE.md](../PERFORMANCE.md) становятся обязательными для мобильного сценария «ввод → список → карточка».
 
 После STAGE-12 можно переходить к browse org-пинам и Search Multi — [design/MOBILE-POI-ZOOM.md](design/MOBILE-POI-ZOOM.md), [STAGE-13-android-poi.md](STAGE-13-android-poi.md) (черновик). Transit — отдельно, [MOBILE.md](MOBILE.md) §6 этап 5.2.
 
@@ -159,7 +159,7 @@ onSelectHit(hit)
   → Room: save query + hit metadata
 ```
 
-Источник подсказок — **Meilisearch через API**, не локальный индекс ([ARCHITECTURE.md](ARCHITECTURE.md)).
+Источник подсказок — **Meilisearch через API**, не локальный индекс ([ARCHITECTURE.md](../ARCHITECTURE.md)).
 
 ### 4.2. Константы (как веб)
 
@@ -259,7 +259,7 @@ Verify:
 - `apps/android/**` (код, layout, Room, тесты)
 - `scripts/stage12-verify.ps1`, `scripts/stage12-verify.sh`
 - `apps/android/README.md`
-- Документы: этот файл; ссылки в [MOBILE.md](MOBILE.md), [PLAN.md](PLAN.md), [ARCHITECTURE.md](ARCHITECTURE.md)
+- Документы: этот файл; ссылки в [MOBILE.md](MOBILE.md), [PLAN.md](../PLAN.md), [ARCHITECTURE.md](../ARCHITECTURE.md)
 
 **Не менять:** `apps/web/**`, `apps/api/**` (контракт `/v1`), Meilisearch settings, PostGIS schema, MBTiles, PMTiles, mobile Style JSON rank-фильтры.
 
@@ -268,7 +268,7 @@ Verify:
 ## 8. Prompt для агента (один чат = этот этап)
 
 ```text
-Сделай STAGE-12 строго по Docs/STAGE-12-android-search.md.
+Сделай STAGE-12 строго по Docs/mobile/STAGE-12-android-search.md.
 
 Нужны: GET /v1/search с debounce 150 ms и stale cancel; EditText + dropdown;
 selectHit → easeTo + selected-marker + sheet (building/org/peek через STAGE-11);

@@ -2,7 +2,7 @@ package rs.zylos.app.ui.sheet
 
 import rs.zylos.app.viewmodel.SheetMode
 
-/** Three discrete object-sheet sizes — Docs/design/object-card/README.md */
+/** Three discrete object-sheet sizes — Docs/mobile/design/object-card/README.md */
 enum class SheetStep {
     Minimal,
     Half,

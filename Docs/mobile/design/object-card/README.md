@@ -105,7 +105,7 @@ Controls (zoom, attribution) сдвигаются вверх на `search_dock_h
 
 ## Макеты
 
-Перегенерация: `python Docs/design/generate_object_card.py`.
+Перегенерация: `python Docs/mobile/design/generate_object_card.py`.
 
 ### Здание (тап по карте)
 

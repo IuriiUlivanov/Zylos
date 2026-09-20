@@ -8,18 +8,18 @@
 
 - Архитектура: [ARCHITECTURE.md](ARCHITECTURE.md)
 - Производительность: [PERFORMANCE.md](PERFORMANCE.md)
-- Мобильный клиент: [MOBILE.md](MOBILE.md)
+- Мобильный клиент: [mobile/README.md](mobile/README.md), [MOBILE.md](mobile/MOBILE.md)
 - Этап 1: [STAGE-01-extract.md](STAGE-01-extract.md)
 - Что тестирует карта этапа 1: [STAGE-01-map-verify.md](STAGE-01-map-verify.md)
 - Этап 2: [STAGE-02-postgis.md](STAGE-02-postgis.md)
 - Этап 3: [STAGE-03-meilisearch.md](STAGE-03-meilisearch.md)
 - Этап 4: [STAGE-04-web-map.md](STAGE-04-web-map.md)
 - Этап 5: [STAGE-05-building-click.md](STAGE-05-building-click.md)
-- Этап 10 (вместо Capacitor): [STAGE-10-android.md](STAGE-10-android.md)
-- Этап 11 (Android, здание + sheet): [STAGE-11-android-building.md](STAGE-11-android-building.md)
-- Этап 12 (Android, поиск): [STAGE-12-android-search.md](STAGE-12-android-search.md)
-- Этап 13 (Android, org-пины): [STAGE-13-android-poi.md](STAGE-13-android-poi.md)
-- Этап 14 (Android, transit): [STAGE-14-android-transit.md](STAGE-14-android-transit.md)
+- Этап 10 (вместо Capacitor): [STAGE-10-android.md](mobile/STAGE-10-android.md)
+- Этап 11 (Android, здание + sheet): [STAGE-11-android-building.md](mobile/STAGE-11-android-building.md)
+- Этап 12 (Android, поиск): [STAGE-12-android-search.md](mobile/STAGE-12-android-search.md)
+- Этап 13 (Android, org-пины): [STAGE-13-android-poi.md](mobile/STAGE-13-android-poi.md)
+- Этап 14 (Android, transit): [STAGE-14-android-transit.md](mobile/STAGE-14-android-transit.md)
 
 ---
 
@@ -35,7 +35,7 @@ OpenStreetMap даёт улицы, здания, остановки и част�
 
 ## Продукт v1: что должно работать
 
-Интерфейс как у 2ГИС Android: карта на весь экран, поиск **снизу**, карточка объекта над поиском ([design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md)). Веб — search сверху, референс контракта.
+Интерфейс как у 2ГИС Android: карта на весь экран, поиск **снизу**, карточка объекта над поиском ([mobile/design/MOBILE-DESIGN.md](mobile/design/MOBILE-DESIGN.md)). Веб — search сверху, референс контракта.
 
 | Функция | v1 | Откуда данные | Сложность |
 |---|---|---|---|
@@ -125,7 +125,7 @@ AI без этих артефактов плывёт.
 | API OpenAPI | Клиент и сервер генерируются из контракта | `/places`, `/buildings/:id`, `/orgs`, `/search`, `/route` |
 | Cursor rules + ADR | Чтобы агент не тащил Google Maps SDK и не скрейпил сайты | `.cursor/rules`: стек, лицензии, граница города |
 | Админка editorial | Единственный путь закрыть дыры OSM по телефонам и тегам | Простая web-форма: создать/править организацию |
-| Дизайн-токены | AI не выдумает третий UI на каждом экране | [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md) — ориентир 2GIS, colors/dimens, иконки категорий |
+| Дизайн-токены | AI не выдумает третий UI на каждом экране | [mobile/design/MOBILE-DESIGN.md](mobile/design/MOBILE-DESIGN.md) — ориентир 2GIS, colors/dimens, иконки категорий |
 | Acceptance fixtures | Проверки «нашёл аптеку», «построил автобус 7A», «здание с адресом» | Набор координат и OSM id в Нови-Саде |
 
 ---
@@ -143,7 +143,7 @@ AI без этих артефактов плывёт.
 7. Valhalla: пешком, велосипед, авто; линия маршрута на карте
 8. Достать GTFS у JGSP, импорт линий/остановок, карта маршрутов
 9. OpenTripPlanner 2: A→B общественным транспортом + пешая доноска
-10. Нативный Android (`apps/android`): MapLibre Native, офлайн MBTiles — [STAGE-10-android.md](STAGE-10-android.md)
+10. Нативный Android (`apps/android`): MapLibre Native, офлайн MBTiles — [STAGE-10-android.md](mobile/STAGE-10-android.md)
 
 ---
 
@@ -248,7 +248,7 @@ LLM не заменяет геоинструменты. Детерминиров
 
 ## Первый конкретный шаг
 
-Этапы 1–5 закрыты. Карта Android: [STAGE-10-android.md](STAGE-10-android.md). Тап по зданию: [STAGE-11-android-building.md](STAGE-11-android-building.md). Autocomplete: [STAGE-12-android-search.md](STAGE-12-android-search.md). Org-пины и Search Multi: [STAGE-13-android-poi.md](STAGE-13-android-poi.md). Следующий шаг — [STAGE-14-android-transit.md](STAGE-14-android-transit.md) (`POST /v1/route` + transit UI). GTFS JGSP — предусловие этапа 14.
+Этапы 1–5 закрыты. Карта Android: [STAGE-10-android.md](mobile/STAGE-10-android.md). Тап по зданию: [STAGE-11-android-building.md](mobile/STAGE-11-android-building.md). Autocomplete: [STAGE-12-android-search.md](mobile/STAGE-12-android-search.md). Org-пины и Search Multi: [STAGE-13-android-poi.md](mobile/STAGE-13-android-poi.md). Следующий шаг — [STAGE-14-android-transit.md](mobile/STAGE-14-android-transit.md) (`POST /v1/route` + transit UI). GTFS JGSP — предусловие этапа 14.
 
 ---
 

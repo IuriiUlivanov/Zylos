@@ -7,7 +7,7 @@
 Связанные документы:
 
 - [MOBILE.md](../MOBILE.md) — функциональная спека Android
-- [PERFORMANCE.md](../PERFORMANCE.md) — пороги U1–U5 (анимации, отзывчивость)
+- [PERFORMANCE.md](../../PERFORMANCE.md) — пороги U1–U5 (анимации, отзывчивость)
 - [MOBILE-POI-ZOOM.md](MOBILE-POI-ZOOM.md) — плотность POI на карте
 - `apps/web/src/theme/tokens.css` — референс токенов (веб не развиваем, но палитра общая)
 - `apps/android/app/src/main/res/values/colors.xml` — канонические цвета Android v1
@@ -24,7 +24,7 @@
 | **Контент снизу** | Карточка выезжает снизу, карта остаётся видимой | `BottomSheetBehavior`, не full-screen modal |
 | **Поиск всегда доступен** | Нижняя панель / строка внизу экрана | Search card **снизу**, над system nav bar; dropdown **вверх** |
 | **Минимум шагов** | Тап → результат; поиск → flyTo + карточка | Не добавлять промежуточные экраны без нужды |
-| **Скорость = дизайн** | Анимации короткие, спиннеры точечные | U1–U3, debounce 150 ms — [PERFORMANCE.md](../PERFORMANCE.md) |
+| **Скорость = дизайн** | Анимации короткие, спиннеры точечные | U1–U3, debounce 150 ms — [PERFORMANCE.md](../../PERFORMANCE.md) |
 | **Светлая тема v1** | Светлая подложка, белые карточки | Тёмная тема — backlog |
 | **sr-Latn UI** | Локальный язык интерфейса | Адреса из API — sr-Latn + sr-Cyrl в данных |
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Docs/design/MOBILE-DESIGN.md §3.1 — keep in sync with apps/web/src/theme/tokens.css -->
+    <!-- Docs/mobile/design/MOBILE-DESIGN.md §3.1 — keep in sync with apps/web/src/theme/tokens.css -->
     <color name="map_bg">#EFEBE3</color>
     <color name="paper">#FFFFFF</color>
     <color name="ink">#1F1F1F</color>

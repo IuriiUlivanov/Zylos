@@ -20,7 +20,7 @@ http_code() {
 
 echo "Stage 11 structural checks..."
 
-need Docs/STAGE-11-android-building.md
+need Docs/mobile/STAGE-11-android-building.md
 need apps/android/app/src/main/java/rs/zylos/app/MapActivity.kt
 need apps/android/app/src/main/java/rs/zylos/app/map/BuildingHighlight.kt
 need apps/android/app/src/main/java/rs/zylos/app/data/api/ZylosApi.kt

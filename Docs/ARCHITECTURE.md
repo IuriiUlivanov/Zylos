@@ -1,8 +1,8 @@
 # Архитектура Zylos
 
-Клон 2ГИС для **Grad Novi Sad** (OSM relation `1649672`). Клиент v1 — нативный Android; веб — референс контракта. Спека телефона: [MOBILE.md](MOBILE.md).
+Клон 2ГИС для **Grad Novi Sad** (OSM relation `1649672`). Клиент v1 — нативный Android; веб — референс контракта. Спека телефона: [MOBILE.md](mobile/MOBILE.md).
 
-Этот файл — как устроены части системы и как они общаются. Продуктовый план: [PLAN.md](PLAN.md). Этапы: [STAGE-01-extract.md](STAGE-01-extract.md), [STAGE-02-postgis.md](STAGE-02-postgis.md), [STAGE-03-meilisearch.md](STAGE-03-meilisearch.md), [STAGE-04-web-map.md](STAGE-04-web-map.md), [STAGE-05-building-click.md](STAGE-05-building-click.md), [STAGE-10-android.md](STAGE-10-android.md), [STAGE-11-android-building.md](STAGE-11-android-building.md), [STAGE-12-android-search.md](STAGE-12-android-search.md). Бюджеты скорости: [PERFORMANCE.md](PERFORMANCE.md). Мобильный клиент: [MOBILE.md](MOBILE.md).
+Этот файл — как устроены части системы и как они общаются. Продуктовый план: [PLAN.md](PLAN.md). Этапы: [STAGE-01-extract.md](STAGE-01-extract.md), [STAGE-02-postgis.md](STAGE-02-postgis.md), [STAGE-03-meilisearch.md](STAGE-03-meilisearch.md), [STAGE-04-web-map.md](STAGE-04-web-map.md), [STAGE-05-building-click.md](STAGE-05-building-click.md), [STAGE-10-android.md](mobile/STAGE-10-android.md), [STAGE-11-android-building.md](mobile/STAGE-11-android-building.md), [STAGE-12-android-search.md](mobile/STAGE-12-android-search.md). Бюджеты скорости: [PERFORMANCE.md](PERFORMANCE.md). Мобильный клиент: [mobile/README.md](mobile/README.md).
 
 ---
 
@@ -134,8 +134,8 @@ flowchart TD
 
 ## 6. Клиент
 
-- Карта на весь экран, поиск **снизу**, карточка объекта над поиском (2GIS Android) — [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md). Веб: search сверху.
-- Android: MapLibre `MapView`; веб (референс): URL (`/?org=`, `/?bldg=`). Тап по зданию на телефоне — [STAGE-11-android-building.md](STAGE-11-android-building.md): `GET /v1/buildings/at` → GeoJSON `selected-building` → bottom sheet → `GET /v1/orgs/:id`. Поиск — [STAGE-12-android-search.md](STAGE-12-android-search.md): `GET /v1/search` (debounce 150 ms), dropdown над нижней строкой, маркер `selected-marker`, Room-история.
+- Карта на весь экран, поиск **снизу**, карточка объекта над поиском (2GIS Android) — [mobile/design/MOBILE-DESIGN.md](mobile/design/MOBILE-DESIGN.md). Веб: search сверху.
+- Android: MapLibre `MapView`; веб (референс): URL (`/?org=`, `/?bldg=`). Тап по зданию на телефоне — [STAGE-11-android-building.md](mobile/STAGE-11-android-building.md): `GET /v1/buildings/at` → GeoJSON `selected-building` → bottom sheet → `GET /v1/orgs/:id`. Поиск — [STAGE-12-android-search.md](mobile/STAGE-12-android-search.md): `GET /v1/search` (debounce 150 ms), dropdown над нижней строкой, маркер `selected-marker`, Room-история.
 - Слои: подложка MVT (PMTiles online / MBTiles offline); поверх — выбранное здание из PostGIS, пины, линия маршрута.
 - Геолокация только с разрешения; без неё центр **19.845, 45.255**.
 - Языки UI: sr-Latn (основной), ru, en позже. Адреса хранить sr-Latn + sr-Cyrl.
@@ -274,6 +274,6 @@ Zylos/
 | 6 | Админка editorial |
 | 7 | Valhalla за API `/route` |
 | 8–9 | GTFS + OTP |
-| 10 | `apps/android` MapLibre Native, MBTiles ([STAGE-10-android.md](STAGE-10-android.md)) |
+| 10 | `apps/android` MapLibre Native, MBTiles ([STAGE-10-android.md](mobile/STAGE-10-android.md)) |
 
 Новый город = новый extract и те же контейнеры, не форк приложения.

@@ -11,7 +11,7 @@ contains() {
   grep -q -F "$2" "$ROOT/$1" || { echo "$1 does not contain $2" >&2; exit 1; }
 }
 
-need Docs/STAGE-10-android.md
+need Docs/mobile/STAGE-10-android.md
 need scripts/build-mbtiles.sh
 need docker-compose.mobile.yml
 need apps/android/settings.gradle

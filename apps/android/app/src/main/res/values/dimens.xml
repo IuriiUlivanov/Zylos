@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Canonical sizes — Docs/design/MOBILE-DESIGN.md §3 -->
+<!-- Canonical sizes — Docs/mobile/design/MOBILE-DESIGN.md §3 -->
 <resources>
     <dimen name="touch_min">48dp</dimen>
     <dimen name="search_height">48dp</dimen>

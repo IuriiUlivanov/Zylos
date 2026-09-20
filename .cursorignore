@@ -62,7 +62,7 @@ data/**/*.gz
 *.dump
 *.sql.gz
 
-# Map-verify output only (keep Docs/design/*.svg indexed for UI work)
+# Map-verify output only (keep Docs/mobile/design/*.svg indexed for UI work)
 scripts/map-verify/output/
 scripts/map-verify/screenshots/
 

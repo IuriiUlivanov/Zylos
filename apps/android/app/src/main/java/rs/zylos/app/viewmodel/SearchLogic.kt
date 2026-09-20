@@ -46,7 +46,7 @@ object SearchLogic {
     /**
      * Bottom camera padding so the target sits at [anchorYFromBottom] of map height
      * (from the bottom). Default 0.75 = centre of the remaining top half when the
-     * sheet covers the bottom half — Docs/design/object-card/README.md.
+     * sheet covers the bottom half — Docs/mobile/design/object-card/README.md.
      */
     fun flyBottomPaddingPx(
         mapHeightPx: Int,

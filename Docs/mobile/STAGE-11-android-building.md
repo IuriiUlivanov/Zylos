@@ -1,6 +1,6 @@
 # Этап 11. Android: тап по зданию, bottom sheet, карточка организации
 
-Связан с [MOBILE.md](MOBILE.md) (§6 этап 4), [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md) (§4.3–4.5 bottom sheet), [STAGE-10-android.md](STAGE-10-android.md), [STAGE-05-building-click.md](STAGE-05-building-click.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PERFORMANCE.md](PERFORMANCE.md).
+Связан с [MOBILE.md](MOBILE.md) (§6 этап 4), [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md) (§4.3–4.5 bottom sheet), [STAGE-10-android.md](STAGE-10-android.md), [STAGE-05-building-click.md](../STAGE-05-building-click.md), [ARCHITECTURE.md](../ARCHITECTURE.md), [PERFORMANCE.md](../PERFORMANCE.md).
 
 Цель: **`apps/android`** получает поведение 2ГИС «тап по дому». Тап по карте → `GET /v1/buildings/at` → `GET /v1/buildings/:id` → подсветка **контура из PostGIS** (GeoJSON), **BottomSheet** со списком адресов и организаций. Тап по организации → `GET /v1/orgs/:id` — полная карточка (телефон, часы, сайт). Офлайн-карта MBTiles **остаётся**; сеть нужна только для справочника.
 
@@ -10,7 +10,7 @@
 - `docker compose` → `postgis`, `api` running (Meilisearch — не блокер этого этапа)
 - `GET /v1/buildings/at`, `/buildings/:id`, `/orgs/:id` отвечают локально (этап 5 веб/API уже реализован)
 - Kotlin DTO в `apps/android/.../data/api/` зеркалят `apps/api/src/types` — **форму JSON не менять**
-- PostGIS: фикстура F6 — здание с ≥ 2 организациями (см. [STAGE-02-postgis.md](STAGE-02-postgis.md))
+- PostGIS: фикстура F6 — здание с ≥ 2 организациями (см. [STAGE-02-postgis.md](../STAGE-02-postgis.md))
 
 Этап **не** добавляет поиск, org-пины по bbox, маршруты, правки `apps/web`, пересборку MBTiles, изменение SQL-схемы PostGIS.
 
@@ -22,7 +22,7 @@
 
 STAGE-10 доказал офлайн-карту на телефоне. Пользователь 2ГИС ожидает: **тапнул на дом — увидел, кто там сидит**.
 
-Без этого этапа PostGIS-справочник не проверяется end-to-end на Android. Пороги **B1–B4, B6, B7** из [PERFORMANCE.md](PERFORMANCE.md) становятся обязательными для мобильного сценария «здание → список → карточка».
+Без этого этапа PostGIS-справочник не проверяется end-to-end на Android. Пороги **B1–B4, B6, B7** из [PERFORMANCE.md](../PERFORMANCE.md) становятся обязательными для мобильного сценария «здание → список → карточка».
 
 После STAGE-11 можно переходить к поиску — [STAGE-12-android-search.md](STAGE-12-android-search.md); org-пины — [STAGE-13-android-poi.md](STAGE-13-android-poi.md).
 
@@ -93,7 +93,7 @@ STAGE-10 доказал офлайн-карту на телефоне. Поль�
 | A4 | GeoJSON `geometry` | **≤ 50 KB** raw | B6 |
 | A5 | Здание без org | **200**, `organizations: []` | B7 |
 
-Контракт JSON — [STAGE-05-building-click.md](STAGE-05-building-click.md) §3.2–3.3. Kotlin DTO — `BuildingDto.kt`, `OrgDto.kt`.
+Контракт JSON — [STAGE-05-building-click.md](../STAGE-05-building-click.md) §3.2–3.3. Kotlin DTO — `BuildingDto.kt`, `OrgDto.kt`.
 
 ### 3.3. Android — карта и сеть
 
@@ -145,7 +145,7 @@ tap org row
   → sheet mode=organization
 ```
 
-Контур и список org **не** из MVT — источник истины **PostGIS** ([ARCHITECTURE.md](ARCHITECTURE.md)).
+Контур и список org **не** из MVT — источник истины **PostGIS** ([ARCHITECTURE.md](../ARCHITECTURE.md)).
 
 ### 4.2. Приоритет hit-test (v1)
 
@@ -237,7 +237,7 @@ Verify:
 - `apps/android/**` (код, layout, тесты)
 - `scripts/stage11-verify.ps1`, `scripts/stage11-verify.sh`
 - `apps/android/README.md`
-- Документы: этот файл; ссылки в [MOBILE.md](MOBILE.md), [PLAN.md](PLAN.md), [ARCHITECTURE.md](ARCHITECTURE.md)
+- Документы: этот файл; ссылки в [MOBILE.md](MOBILE.md), [PLAN.md](../PLAN.md), [ARCHITECTURE.md](../ARCHITECTURE.md)
 
 **Не менять:** `apps/web/**`, `apps/api/**` (контракт `/v1`), PostGIS schema, `infra/preview/style.json` (веб), MBTiles, PMTiles.
 
@@ -246,7 +246,7 @@ Verify:
 ## 8. Prompt для агента (один чат = этот этап)
 
 ```text
-Сделай STAGE-11 строго по Docs/STAGE-11-android-building.md.
+Сделай STAGE-11 строго по Docs/mobile/STAGE-11-android-building.md.
 
 Нужны: Retrofit к /v1/buildings/at, /buildings/:id, /orgs/:id; onMapClick;
 GeoJSON selected-building; BottomSheet building + organization; Snackbar 404/422;

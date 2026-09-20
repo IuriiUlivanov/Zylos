@@ -4,7 +4,7 @@ object MapDefaults {
     const val MAX_PITCH = 60.0
     const val STYLE_ASSET = "style-mobile.json"
     const val WATER_ASSET = "water-fill.geojson"
-    /** U2: bottom sheet animation budget. Docs/design/object-card/README.md */
+    /** U2: bottom sheet animation budget. Docs/mobile/design/object-card/README.md */
     const val SHEET_ANIMATION_MS = 250
     const val SHEET_STEP1_DP = 48
     const val SHEET_STEP2_RATIO = 0.5f

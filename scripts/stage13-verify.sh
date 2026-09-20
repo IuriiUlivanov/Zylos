@@ -18,8 +18,8 @@ http_code() {
 
 echo "Stage 13 structural checks..."
 
-need Docs/STAGE-13-android-poi.md
-need Docs/design/MOBILE-POI-ZOOM.md
+need Docs/mobile/STAGE-13-android-poi.md
+need Docs/mobile/design/MOBILE-POI-ZOOM.md
 need infra/preview/style-mobile.json
 need infra/preview/style.json
 need apps/android/app/src/main/java/rs/zylos/app/map/OrgPinLogic.kt

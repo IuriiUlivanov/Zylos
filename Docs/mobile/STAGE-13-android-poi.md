@@ -1,6 +1,6 @@
 # Этап 13. Android: org-пины и Search Multi
 
-Связан с [MOBILE.md](MOBILE.md) (§6 этап 5), [design/MOBILE-POI-ZOOM.md](design/MOBILE-POI-ZOOM.md), [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md) (§5 карта), [STAGE-12-android-search.md](STAGE-12-android-search.md), [STAGE-11-android-building.md](STAGE-11-android-building.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PERFORMANCE.md](PERFORMANCE.md).
+Связан с [MOBILE.md](MOBILE.md) (§6 этап 5), [design/MOBILE-POI-ZOOM.md](design/MOBILE-POI-ZOOM.md), [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md) (§5 карта), [STAGE-12-android-search.md](STAGE-12-android-search.md), [STAGE-11-android-building.md](STAGE-11-android-building.md), [ARCHITECTURE.md](../ARCHITECTURE.md), [PERFORMANCE.md](../PERFORMANCE.md).
 
 Цель: **`apps/android`** получает **browse org-пины** по viewport (`GET /v1/orgs?bbox=`), **прогрессивную плотность OSM POI** в mobile Style JSON и режим **Search Multi** — до **15** маркеров результатов поиска на карте с `fitBounds`, browse-пины в search-режиме **скрыты**. Офлайн-карта MBTiles **остаётся**; bbox-запросы и live search требуют сеть.
 
@@ -21,7 +21,7 @@
 
 STAGE-12 доказал autocomplete и один маркер выбранного hit. Пользователь 2ГИС ожидает: **приблизил карту — увидел аптеки и кафе**; **набрал «apoteka» — увидел все результаты на карте**, а не только один.
 
-Без этого этапа PostGIS bbox и прогрессивный POI из [design/MOBILE-POI-ZOOM.md](design/MOBILE-POI-ZOOM.md) не проверяются end-to-end на Android. Пороги **B5**, **T4** из [PERFORMANCE.md](PERFORMANCE.md) становятся обязательными для сценария «browse + search multi».
+Без этого этапа PostGIS bbox и прогрессивный POI из [design/MOBILE-POI-ZOOM.md](design/MOBILE-POI-ZOOM.md) не проверяются end-to-end на Android. Пороги **B5**, **T4** из [PERFORMANCE.md](../PERFORMANCE.md) становятся обязательными для сценария «browse + search multi».
 
 После STAGE-13 можно переходить к transit — [STAGE-14-android-transit.md](STAGE-14-android-transit.md).
 
@@ -356,7 +356,7 @@ node scripts\stage05-verify.mjs    # B5 регрессия
 - `apps/android/app/build.gradle` — копировать `style-mobile.json` в assets вместо `style.json`
 - `scripts/stage13-verify.ps1`, `scripts/stage13-verify.sh`
 - `apps/android/README.md`
-- Документы: этот файл; ссылки в [MOBILE.md](MOBILE.md), [PLAN.md](PLAN.md)
+- Документы: этот файл; ссылки в [MOBILE.md](MOBILE.md), [PLAN.md](../PLAN.md)
 
 **Не менять:** `apps/web/**`, `apps/api/**` (контракт `/v1`), PostGIS schema, Meilisearch, MBTiles, PMTiles. `infra/preview/style.json` — только если правка общая и не ломает веб-verify.
 
@@ -365,7 +365,7 @@ node scripts\stage05-verify.mjs    # B5 регрессия
 ## 8. Prompt для агента (один чат = этот этап)
 
 ```text
-Сделай STAGE-13 строго по Docs/STAGE-13-android-poi.md и design/MOBILE-POI-ZOOM.md.
+Сделай STAGE-13 строго по Docs/mobile/STAGE-13-android-poi.md и Docs/mobile/design/MOBILE-POI-ZOOM.md.
 
 Нужны: GET /v1/orgs?bbox= с debounce 300 ms и limit по zoom; GeoJSON org-pins;
 style-mobile.json с poi-dot/poi-label filters; Search Multi (≤15 пинов, fitBounds,

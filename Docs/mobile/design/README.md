@@ -20,8 +20,8 @@ UI/UX-документация проекта. Продуктовый ориен
 ## Связанные документы
 
 - [MOBILE.md](../MOBILE.md) — функциональная спека Android
-- [PERFORMANCE.md](../PERFORMANCE.md) — пороги отзывчивости (U1–U5, T4, B5)
-- [ARCHITECTURE.md](../ARCHITECTURE.md) — общая архитектура
+- [PERFORMANCE.md](../../PERFORMANCE.md) — пороги отзывчивости (U1–U5, T4, B5)
+- [ARCHITECTURE.md](../../ARCHITECTURE.md) — общая архитектура
 - `apps/android/app/src/main/res/values/colors.xml`, `dimens.xml` — канонические токены Android v1
 - `apps/web/src/theme/tokens.css` — референс палитры (веб не развиваем)
 

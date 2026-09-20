@@ -23,7 +23,7 @@ function Assert-Contains([string]$Rel, [string]$Needle) {
 Write-Host "Stage 14 structural checks..."
 
 @(
-    "Docs\STAGE-14-android-transit.md",
+    "Docs\mobile\STAGE-14-android-transit.md",
     "apps\api\src\types\route.ts",
     "apps\api\src\routes\route.ts",
     "apps\api\src\services\otpClient.ts",

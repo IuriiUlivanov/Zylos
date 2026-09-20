@@ -8,7 +8,7 @@
 
 ![Browse — вкладка Pretraga (default)](01-browse-search-tab.svg)
 
-Перегенерация: `python Docs/design/route/generate_route_screens.py`.
+Перегенерация: `python Docs/mobile/design/route/generate_route_screens.py`.
 
 ---
 

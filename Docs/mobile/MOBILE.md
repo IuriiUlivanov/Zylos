@@ -7,9 +7,9 @@
 Связанные документы:
 
 - [design/MOBILE-DESIGN.md](design/MOBILE-DESIGN.md) — **UI/UX и design tokens** (ориентир 2GIS)
-- [ARCHITECTURE.md](ARCHITECTURE.md) — контейнеры, API, потоки данных
-- [PLAN.md](PLAN.md) — общий план реализации
-- [PERFORMANCE.md](PERFORMANCE.md) — обязательные SLO (фича не done без порога)
+- [ARCHITECTURE.md](../ARCHITECTURE.md) — контейнеры, API, потоки данных
+- [PLAN.md](../PLAN.md) — общий план реализации
+- [PERFORMANCE.md](../PERFORMANCE.md) — обязательные SLO (фича не done без порога)
 - [design/MOBILE-POI-ZOOM.md](design/MOBILE-POI-ZOOM.md) — ранжирование POI по zoom (browse / search)
 
 **Приоритет разработки:** мобильное приложение. Веб-клиент (`apps/web`) **не развиваем**; он остаётся референсом контракта API и Style JSON, не общим UI.
@@ -115,7 +115,7 @@
 
 **Пороги:** B2 p95 ≤ 100 ms (сервер), B4 p95 ≤ 350 ms (до списка в UI).
 
-Контур и список org **не** из `queryRenderedFeatures` по MVT — источник истины **PostGIS** (как в [ARCHITECTURE.md](ARCHITECTURE.md)). Тайлы — картинка; справочник — API.
+Контур и список org **не** из `queryRenderedFeatures` по MVT — источник истины **PostGIS** (как в [ARCHITECTURE.md](../ARCHITECTURE.md)). Тайлы — картинка; справочник — API.
 
 ### 2.4. Поиск (Meilisearch, не Pelias)
 

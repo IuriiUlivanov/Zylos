@@ -1,6 +1,6 @@
 # Этап 5. Клик по зданию: контур, адрес, организации, карточка
 
-Связан с [PLAN.md](PLAN.md), [STAGE-04-web-map.md](STAGE-04-web-map.md), [STAGE-02-postgis.md](STAGE-02-postgis.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PERFORMANCE.md](PERFORMANCE.md), [MOBILE.md](MOBILE.md).
+Связан с [PLAN.md](PLAN.md), [STAGE-04-web-map.md](STAGE-04-web-map.md), [STAGE-02-postgis.md](STAGE-02-postgis.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PERFORMANCE.md](PERFORMANCE.md), [MOBILE.md](mobile/MOBILE.md).
 
 Цель: карта этапа 4 **расширяется** до поведения 2ГИС «тап по дому». Клик по зданию (координата на карте) → `GET /v1/buildings/at` → подсветка **контура из PostGIS** (GeoJSON), bottom sheet со **списком адресов и организаций**. Тап по организации → `GET /v1/orgs/:id` — полная карточка (телефон, часы, сайт). Поиск и POI из тайлов **остаются**; приоритет hit-test зафиксирован в коде.
 

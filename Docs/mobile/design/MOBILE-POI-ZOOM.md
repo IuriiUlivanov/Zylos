@@ -7,8 +7,8 @@
 - [MOBILE-DESIGN.md](MOBILE-DESIGN.md) — UI/UX Android, design tokens
 - [MOBILE.md](../MOBILE.md) — общая спецификация Android-клиента
 - [STAGE-10-android.md](../STAGE-10-android.md) — офлайн-карта, Style JSON
-- [PERFORMANCE.md](../PERFORMANCE.md) — SLO T4 (FPS), B5 (лимит org-пинов)
-- [ARCHITECTURE.md](../ARCHITECTURE.md) — `/v1/orgs?bbox=`, `/v1/search`
+- [PERFORMANCE.md](../../PERFORMANCE.md) — SLO T4 (FPS), B5 (лимит org-пинов)
+- [ARCHITECTURE.md](../../ARCHITECTURE.md) — `/v1/orgs?bbox=`, `/v1/search`
 
 **Область:** `apps/android`, mobile-сборка Style JSON (на базе `infra/preview/style.json`). Веб (`apps/web`) не развиваем; таблицы ниже — **целевое поведение Android v1**.
 
@@ -82,7 +82,7 @@ OpenMapTiles дополнительно задаёт базовый приори
 | **`kind`** (`address` / `organization`) | ★★ |
 | **`building_id`** | ★ flyTo к зданию |
 
-Лимит API: **15** hits ([PERFORMANCE.md](../PERFORMANCE.md) S2). Zoom-рейтинг в search не нужен — показываются только результаты запроса.
+Лимит API: **15** hits ([PERFORMANCE.md](../../PERFORMANCE.md) S2). Zoom-рейтинг в search не нужен — показываются только результаты запроса.
 
 ---
 

@@ -22,7 +22,7 @@ function Assert-Contains([string]$Rel, [string]$Needle) {
 Write-Host "Stage 10 structural checks..."
 
 @(
-    "Docs\STAGE-10-android.md",
+    "Docs\mobile\STAGE-10-android.md",
     "scripts\build-mbtiles.ps1",
     "scripts\build-mbtiles.sh",
     "docker-compose.mobile.yml",

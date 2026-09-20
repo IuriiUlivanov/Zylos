@@ -27,7 +27,7 @@ data class RankedOrgPin(
     val labeled: Boolean,
 )
 
-/** Zoom → limit / debounce tables — Docs/design/MOBILE-POI-ZOOM.md §4.3. */
+/** Zoom → limit / debounce tables — Docs/mobile/design/MOBILE-POI-ZOOM.md §4.3. */
 object OrgPinLimits {
     fun debounceMs(zoom: Double): Long {
         val band = zoomBand(zoom)

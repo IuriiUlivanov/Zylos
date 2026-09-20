@@ -1,6 +1,6 @@
 # Этап 4. Веб-карта MapLibre: тайлы, поиск, POI, bottom sheet
 
-Связан с [PLAN.md](PLAN.md), [STAGE-03-meilisearch.md](STAGE-03-meilisearch.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PERFORMANCE.md](PERFORMANCE.md), [MOBILE.md](MOBILE.md).
+Связан с [PLAN.md](PLAN.md), [STAGE-03-meilisearch.md](STAGE-03-meilisearch.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PERFORMANCE.md](PERFORMANCE.md), [MOBILE.md](mobile/MOBILE.md).
 
 Цель: появляется **`apps/web`** — React + MapLibre + Vite. Карта на весь экран, поле поиска сверху, подсказки из `GET /v1/search`, выбор результата → flyTo + маркер + **bottom sheet** с краткой карточкой. Клик по POI из тайлов (слой `poi`) открывает такой же sheet с данными из MVT. Продуктовый экран «как 2ГИС» на минимальном уровне, без клика по зданию и без маршрутов.
 
@@ -194,7 +194,7 @@ Verify (Playwright или Puppeteer, как `map-verify` этапа 1) откр�
 
 ## 5. Компоновка экрана
 
-Паттерн 2ГИС ([ARCHITECTURE.md](ARCHITECTURE.md) §6, [MOBILE.md](MOBILE.md) §2.2):
+Паттерн 2ГИС ([ARCHITECTURE.md](ARCHITECTURE.md) §6, [MOBILE.md](mobile/MOBILE.md) §2.2):
 
 ```text
 ┌─────────────────────────────────────┐

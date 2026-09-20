@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Generate object-card mockups (3-step sheet) for Docs/design/object-card/."""
+"""Generate object-card mockups (3-step sheet) for Docs/mobile/design/object-card/."""
 from __future__ import annotations
 
 import sys

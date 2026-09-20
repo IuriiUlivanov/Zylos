@@ -39,7 +39,7 @@ function Get-Http([string]$Url) {
 Write-Host "Stage 11 structural checks..."
 
 @(
-    "Docs\STAGE-11-android-building.md",
+    "Docs\mobile\STAGE-11-android-building.md",
     "apps\android\app\src\main\java\rs\zylos\app\MapActivity.kt",
     "apps\android\app\src\main\java\rs\zylos\app\map\BuildingHighlight.kt",
     "apps\android\app\src\main\java\rs\zylos\app\data\api\ZylosApi.kt",

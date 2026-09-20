@@ -13,7 +13,7 @@ contains() {
 
 echo "Stage 14 structural checks..."
 
-need Docs/STAGE-14-android-transit.md
+need Docs/mobile/STAGE-14-android-transit.md
 need apps/api/src/types/route.ts
 need apps/api/src/routes/route.ts
 need apps/api/src/services/otpClient.ts

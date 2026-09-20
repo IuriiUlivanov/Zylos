@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Generate 2GIS-like Android map mockups for Docs/design/screens/."""
+"""Generate 2GIS-like Android map mockups for Docs/mobile/design/screens/."""
 from __future__ import annotations
 
 from pathlib import Path

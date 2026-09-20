@@ -1,6 +1,6 @@
 # Zylos Android
 
-Нативный клиент. Текущий этап: [STAGE-14-android-transit.md](../../Docs/STAGE-14-android-transit.md) (org-пины — [STAGE-13-android-poi.md](../../Docs/STAGE-13-android-poi.md), поиск — [STAGE-12-android-search.md](../../Docs/STAGE-12-android-search.md), здание — [STAGE-11-android-building.md](../../Docs/STAGE-11-android-building.md), карта — [STAGE-10-android.md](../../Docs/STAGE-10-android.md)). UI/UX — [MOBILE-DESIGN.md](../../Docs/design/MOBILE-DESIGN.md) (ориентир 2GIS). Веб не развиваем. API — существующий Fastify `/v1`.
+Нативный клиент. Текущий этап: [STAGE-14-android-transit.md](../../Docs/mobile/STAGE-14-android-transit.md) (org-пины — [STAGE-13-android-poi.md](../../Docs/mobile/STAGE-13-android-poi.md), поиск — [STAGE-12-android-search.md](../../Docs/mobile/STAGE-12-android-search.md), здание — [STAGE-11-android-building.md](../../Docs/mobile/STAGE-11-android-building.md), карта — [STAGE-10-android.md](../../Docs/mobile/STAGE-10-android.md)). UI/UX — [MOBILE-DESIGN.md](../../Docs/mobile/design/MOBILE-DESIGN.md) (ориентир 2GIS). Веб не развиваем. API — существующий Fastify `/v1`.
 
 ## Сборка
 
@@ -32,7 +32,7 @@ Debug APK разрешает HTTP (`usesCleartextTraffic=true`). `network_securi
 
 ## Здание и карточка (STAGE-11)
 
-Тап по карте (не по строке поиска **внизу**) → `GET /v1/buildings/at` → `GET /v1/buildings/:id`. Контур — GeoJSON из PostGIS. Object sheet **над** search dock, 8 dp зазор: **3 шага** (высота search / 50% / 100% контентной зоны), открытие на шаге 2; свайп не закрывает с шага 1 — только **×**. Тап по org → `GET /v1/orgs/:id`. Макеты — [object-card](../../Docs/design/object-card/README.md).
+Тап по карте (не по строке поиска **внизу**) → `GET /v1/buildings/at` → `GET /v1/buildings/:id`. Контур — GeoJSON из PostGIS. Object sheet **над** search dock, 8 dp зазор: **3 шага** (высота search / 50% / 100% контентной зоны), открытие на шаге 2; свайп не закрывает с шага 1 — только **×**. Тап по org → `GET /v1/orgs/:id`. Макеты — [object-card](../../Docs/mobile/design/object-card/README.md).
 
 ```powershell
 # API (хост)
@@ -42,14 +42,14 @@ docker compose up -d postgis api
 
 ## Поиск (STAGE-12)
 
-Строка **снизу** (2GIS Android). Autocomplete `GET /v1/search` (debounce 150 ms, min 2 символа, `limit=10`, geo из камеры). Dropdown растёт **вверх**. Выбор hit → `easeTo` 800 ms, zoom ≥ 16, маркер `selected-marker`, sheet building / org / peek. Room `search_history` — последние 10 уникальных запросов (офлайн только история). Спека: [STAGE-12-android-search.md](../../Docs/STAGE-12-android-search.md).
+Строка **снизу** (2GIS Android). Autocomplete `GET /v1/search` (debounce 150 ms, min 2 символа, `limit=10`, geo из камеры). Dropdown растёт **вверх**. Выбор hit → `easeTo` 800 ms, zoom ≥ 16, маркер `selected-marker`, sheet building / org / peek. Room `search_history` — последние 10 уникальных запросов (офлайн только история). Спека: [STAGE-12-android-search.md](../../Docs/mobile/STAGE-12-android-search.md).
 
 ```powershell
 docker compose up -d postgis meilisearch api
 ..\..\scripts\stage12-verify.ps1
 ```
 
-Org-пины по zoom — [STAGE-13-android-poi.md](../../Docs/STAGE-13-android-poi.md), [MOBILE-POI-ZOOM.md](../../Docs/design/MOBILE-POI-ZOOM.md). Маршрут transit — [STAGE-14-android-transit.md](../../Docs/STAGE-14-android-transit.md).
+Org-пины по zoom — [STAGE-13-android-poi.md](../../Docs/mobile/STAGE-13-android-poi.md), [MOBILE-POI-ZOOM.md](../../Docs/mobile/design/MOBILE-POI-ZOOM.md). Маршрут transit — [STAGE-14-android-transit.md](../../Docs/mobile/STAGE-14-android-transit.md).
 
 ## Org-пины и Search Multi (STAGE-13)
 

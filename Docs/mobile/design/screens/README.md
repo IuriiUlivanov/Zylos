@@ -4,7 +4,7 @@
 
 **Карточка объекта (3 шага):** канонические макеты и поведение — **[object-card/README.md](../object-card/README.md)**. Экраны `05`/`06`/`08` здесь — legacy-имена (peek/half).
 
-Открывать в браузере (двойной клик или `start путь.svg`). Перегенерация: `python Docs/design/generate_screens.py`.
+Открывать в браузере (двойной клик или `start путь.svg`). Перегенерация: `python Docs/mobile/design/generate_screens.py`.
 
 ## 1. Browse — карта
 
