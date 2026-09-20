@@ -166,9 +166,6 @@ class MapViewModel(
             publish()
             return
         }
-        if (routeFeature.state.value.bottomTab == BottomTab.Route) {
-            return
-        }
         searchFeature.clearSelected()
         searchFeature.setFocused(false)
         pinsFeature.prepareMapPick()
@@ -225,6 +222,7 @@ class MapViewModel(
             return
         }
         routeFeature.enter(selectedDestination())
+        dismissObjectSelection()
         publish()
     }
 
@@ -325,11 +323,8 @@ class MapViewModel(
                 message = event.message
                 haptic = event.haptic
             }
-            MapEvent.RouteCleared -> {
-                pinsFeature.setRouteMode(MapRouteMode.Idle)
-                pinsFeature.schedule()
-            }
-            is MapEvent.RouteModeChanged -> pinsFeature.setRouteMode(event.mode)
+            MapEvent.RouteCleared -> pinsFeature.schedule()
+            is MapEvent.RouteModeChanged -> pinsFeature.schedule()
             is MapEvent.FlyTo -> cameraTarget = event.target
             is MapEvent.FitBounds -> boundsTarget = event.target
             MapEvent.ClearCamera -> cameraTarget = null
@@ -391,6 +386,16 @@ class MapViewModel(
         message = null
         haptic = false
         pinsFeature.schedule()
+    }
+
+    private fun dismissObjectSelection() {
+        sheetFeature.reset()
+        searchFeature.clearSelected()
+        searchFeature.setFocused(false)
+        pinsFeature.resetBrowse()
+        boundsTarget = null
+        message = null
+        haptic = false
     }
 
     private fun selectedDestination(): RoutePoint? {

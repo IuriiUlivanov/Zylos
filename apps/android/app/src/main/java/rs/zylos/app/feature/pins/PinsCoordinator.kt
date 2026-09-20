@@ -18,7 +18,6 @@ import rs.zylos.app.viewmodel.CameraTracker
 import rs.zylos.app.viewmodel.MapEvent
 import rs.zylos.app.viewmodel.MapEventSink
 import rs.zylos.app.viewmodel.MapPinMode
-import rs.zylos.app.viewmodel.MapRouteMode
 import rs.zylos.app.viewmodel.OverlayUiState
 import rs.zylos.app.viewmodel.SearchLogic
 
@@ -33,14 +32,9 @@ class PinsCoordinator(
 
     private var orgPinsJob: Job? = null
     private var orgPinsGeneration = 0
-    private var routeMode: MapRouteMode = MapRouteMode.Idle
 
     fun onCleared() {
         orgPinsJob?.cancel()
-    }
-
-    fun setRouteMode(mode: MapRouteMode) {
-        routeMode = mode
     }
 
     fun setHighlight(geometry: BuildingGeometry?) {
@@ -114,7 +108,7 @@ class PinsCoordinator(
 
     fun schedule() {
         orgPinsJob?.cancel()
-        if (_state.value.pinMode != MapPinMode.Browse || routeMode != MapRouteMode.Idle) {
+        if (_state.value.pinMode != MapPinMode.Browse) {
             return
         }
         if (!OrgPinLimits.shouldRequest(camera.zoom)) {
@@ -127,7 +121,6 @@ class PinsCoordinator(
         orgPinsJob = scope.launch {
             delay(OrgPinLimits.debounceMs(zoom))
             if (_state.value.pinMode != MapPinMode.Browse) return@launch
-            if (routeMode != MapRouteMode.Idle) return@launch
             val latest = camera.bbox ?: bbox
             if (!OrgPinLimits.shouldRequest(camera.zoom)) {
                 _state.value = _state.value.copy(orgPins = emptyList())
@@ -140,7 +133,6 @@ class PinsCoordinator(
                 is OrgBboxResult.Ok -> {
                     if (request != orgPinsGeneration) return@launch
                     if (_state.value.pinMode != MapPinMode.Browse) return@launch
-                    if (routeMode != MapRouteMode.Idle) return@launch
                     val visible = OrgPinLogic.visiblePins(result.pins, camera.zoom, latest)
                     _state.value = _state.value.copy(orgPins = visible)
                     events.emit(MapEvent.Snapshot)

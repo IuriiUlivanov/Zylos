@@ -2,21 +2,43 @@
 .env
 .env.*
 !.env.example
+docker-compose.override.yml
 
-# Dependencies and build output
+# Node / web / API build
 **/node_modules/
 **/dist/
-**/build/
 **/.vite/
 **/coverage/
 
-# OSM extracts, tiles, Planetiler, RGZ dumps — binary, huge
+# Android — Gradle, AGP, KSP (main index noise)
+apps/android/.gradle/
+**/.gradle/
+apps/android/**/build/
+apps/android/.idea/
+apps/android/local.properties
+apps/android/captures/
+apps/android/.cxx/
+apps/android/*.iml
+.kotlin/
+*.apk
+*.aab
+*.dex
+*.class
+
+# Meilisearch / OTP runtime data
+meili_data/
+data/otp/
+
+# OSM extracts, tiles, Planetiler, RGZ, GTFS — binary, huge (see data/README.md)
 data/osm/
 data/tiles/
 data/rgz/
 data/sources/
 data/planetiler-tmp/
 data/tmp/
+data/gtfs/jgsp/*
+!data/gtfs/jgsp/README.md
+!data/gtfs/jgsp/.gitkeep
 data/tile_weights.tsv.gz
 
 *.pbf
@@ -31,24 +53,22 @@ data/tile_weights.tsv.gz
 *.osm
 *.osm.xml
 
-# Archives and dumps
+# Archives and DB dumps
 *.zip
 *.7z
 *.tar
 *.tar.gz
-*.gz
+data/**/*.gz
 *.dump
 *.sql.gz
 
-# Map-verify / screenshots (pixels, not code)
+# Map-verify output only (keep Docs/design/*.svg indexed for UI work)
 scripts/map-verify/output/
 scripts/map-verify/screenshots/
-*.png
-*.jpg
-*.jpeg
-*.webp
-*.mp4
-*.webm
+
+# OS junk
+.DS_Store
+Thumbs.db
 
 # Logs
 *.log

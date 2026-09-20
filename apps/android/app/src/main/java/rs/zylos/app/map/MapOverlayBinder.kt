@@ -10,7 +10,6 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.PropertyFactory
-import rs.zylos.app.viewmodel.BottomTab
 import rs.zylos.app.viewmodel.MapPinMode
 import rs.zylos.app.viewmodel.MapRouteMode
 import rs.zylos.app.viewmodel.MapUiState
@@ -82,7 +81,7 @@ class MapOverlayBinder(
                 OrgPins.CIRCLE_LAYER_ID,
                 OrgPins.LABEL_LAYER_ID,
             )
-            if (orgHits.isNotEmpty() && allowsOrgPick(state)) {
+            if (orgHits.isNotEmpty()) {
                 viewModel.onOrgPinClick(orgHits[0].getStringProperty("id"))
                 return@addOnMapClickListener true
             }
@@ -93,8 +92,8 @@ class MapOverlayBinder(
 
     fun render(state: MapUiState) {
         val style = mapStyle ?: return
-        val browse = state.overlay.pinMode == MapPinMode.Browse && allowsOrgPick(state)
-        val searchMulti = state.overlay.pinMode == MapPinMode.SearchMulti && allowsOrgPick(state)
+        val browse = state.overlay.pinMode == MapPinMode.Browse
+        val searchMulti = state.overlay.pinMode == MapPinMode.SearchMulti
         BuildingHighlightLayers.setGeometry(
             style,
             state.overlay.highlight?.let { BuildingHighlight.collectionJson(it) },
@@ -143,10 +142,6 @@ class MapOverlayBinder(
     fun applyAttributionMargins(bottomPx: Int) {
         map?.uiSettings?.setAttributionGravity(Gravity.BOTTOM or Gravity.START)
         map?.uiSettings?.setAttributionMargins(dp(12), 0, 0, bottomPx)
-    }
-
-    private fun allowsOrgPick(state: MapUiState): Boolean {
-        return state.route.bottomTab == BottomTab.Search && state.route.mode != MapRouteMode.Result
     }
 
     private fun renderRouteLayers(state: MapUiState, style: Style) {

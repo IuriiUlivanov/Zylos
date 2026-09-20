@@ -16,8 +16,6 @@ import rs.zylos.app.databinding.ItemOrgFieldBinding
 import rs.zylos.app.map.MapDefaults
 import rs.zylos.app.ui.search.SearchDropdownAdapter
 import rs.zylos.app.ui.search.SearchRow
-import rs.zylos.app.viewmodel.BottomTab
-import rs.zylos.app.viewmodel.MapRouteMode
 import rs.zylos.app.viewmodel.MapUiState
 import rs.zylos.app.viewmodel.MapViewModel
 import rs.zylos.app.viewmodel.SheetLogic
@@ -98,11 +96,6 @@ class ObjectSheetBinder(
     }
 
     fun render(state: MapUiState) {
-        if (state.route.mode == MapRouteMode.Result && state.route.bottomTab == BottomTab.Route) {
-            setSheetState(BottomSheetBehavior.STATE_HIDDEN)
-            lastSheetMode = state.sheet.mode
-            return
-        }
         val context = binding.root.context
         val modeChanged = lastSheetMode != state.sheet.mode
         val loading = state.sheet.mode == SheetMode.Loading

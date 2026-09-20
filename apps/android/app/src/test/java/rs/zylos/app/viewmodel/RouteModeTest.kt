@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -150,7 +151,7 @@ class RouteModeTest {
     }
 
     @Test
-    fun searchTabRestoresBuildingPickAfterRoute() = runTest(dispatcher) {
+    fun routePlanningAllowsBuildingPick() = runTest(dispatcher) {
         val buildings = FakeBuildings(
             atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
             byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
@@ -160,16 +161,52 @@ class RouteModeTest {
         assertEquals(MapRouteMode.Planning, vm.state.value.route.mode)
         vm.onMapClick(19.84, 45.25)
         advanceUntilIdle()
-        assertEquals(SheetMode.Idle, vm.state.value.sheet.mode)
-        assertEquals(0, buildings.atCalls)
+        assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
+        assertEquals("b1", vm.state.value.sheet.building?.id)
+    }
 
-        vm.onSelectTab(BottomTab.Search)
-        assertEquals(MapRouteMode.Idle, vm.state.value.route.mode)
-        assertEquals(BottomTab.Search, vm.state.value.route.bottomTab)
+    @Test
+    fun routeResultAllowsBuildingPickOnRouteTab() = runTest(dispatcher) {
+        val buildings = FakeBuildings(
+            atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
+            byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
+        )
+        val vm = MapViewModel(
+            buildings,
+            FakeOrgs(),
+            routes = FakeRoutes { _, _ -> RouteResult.Ok(sampleResponse("x")) },
+        )
+        vm.onMapPicked(RouteField.From, 19.845, 45.255, "A")
+        vm.onMapPicked(RouteField.To, 19.840, 45.238, "B")
+        vm.onBuildRoute()
+        advanceUntilIdle()
+        assertEquals(MapRouteMode.Result, vm.state.value.route.mode)
+        assertEquals(BottomTab.Route, vm.state.value.route.bottomTab)
         vm.onMapClick(19.84, 45.25)
         advanceUntilIdle()
         assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
         assertEquals("b1", vm.state.value.sheet.building?.id)
+    }
+
+    @Test
+    fun enteringRouteClearsBuildingSelectionAndFillsTo() = runTest(dispatcher) {
+        val buildings = FakeBuildings(
+            atFn = { _, _ -> BuildingAtResult.Found(BuildingAtResponse("b1", "Bulevar")) },
+            byIdFn = { BuildingDetailResult.Found(sampleBuilding("b1")) },
+        )
+        val vm = MapViewModel(buildings, FakeOrgs())
+        vm.onMapClick(19.84, 45.25)
+        advanceUntilIdle()
+        assertEquals(SheetMode.Building, vm.state.value.sheet.mode)
+        assertNotNull(vm.state.value.overlay.highlight)
+
+        vm.onSelectTab(BottomTab.Route)
+        assertEquals(BottomTab.Route, vm.state.value.route.bottomTab)
+        assertEquals(SheetMode.Idle, vm.state.value.sheet.mode)
+        assertNull(vm.state.value.sheet.building)
+        assertNull(vm.state.value.overlay.highlight)
+        assertNull(vm.state.value.overlay.marker)
+        assertEquals("Bulevar 12", vm.state.value.route.to?.label)
     }
 
     @Test
